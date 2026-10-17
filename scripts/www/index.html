@@ -1,0 +1,3270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#F2F2F7">
+<title>刷新表</title>
+<style>
+  :root{
+    --bg:#F2F2F7;
+    --panel:#FFFFFF;
+    --panel2:#F9F9FB;
+    --line:rgba(60,60,67,.11);
+    --ink:#1C1C1E;
+    --dim:#8E8E93;
+    --gold:#007AFF;
+    --gold-ink:#FFFFFF;
+    --jade:#34C759;
+    --amber:#FF9500;
+    --alert:#FF3B30;
+    --seg:#E5E5EA;
+    --mono:"SF Mono","Cascadia Mono","Consolas",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none !important}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:16px 14px 72px}
+
+  /* 顶部导航栏 */
+  .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+  h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+  .badge-mode{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;
+              background:rgba(0,122,255,.1);color:var(--gold)}
+  .badge-mode.team{background:rgba(52,199,89,.12);color:var(--jade)}
+  .ctl{display:flex;gap:6px;align-items:center}
+
+  /* 苹果风按钮 */
+  .btn{font:inherit;font-size:13px;font-weight:500;border-radius:10px;padding:6px 12px;border:0;
+       background:rgba(118,118,128,.12);color:var(--ink);cursor:pointer;transition:all .15s;
+       display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .btn:hover{background:rgba(118,118,128,.18)}
+  .btn:active{transform:scale(.96)}
+  .btn.primary{background:var(--gold);color:#fff;font-weight:600}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.jade{background:var(--jade);color:#fff;font-weight:600}
+  .btn.rec{background:rgba(0,122,255,.1);color:var(--gold);font-weight:600;border-radius:8px;padding:5px 10px}
+  .btn.rec:hover{background:rgba(0,122,255,.16)}
+  .btn.edit-t{background:rgba(118,118,128,.1);color:var(--dim);font-size:12px;padding:5px 9px;border-radius:8px}
+  .btn.edit-t:hover{color:var(--ink);background:rgba(118,118,128,.16)}
+  .btn.del{background:transparent;color:#C7C7CC;padding:4px 7px;font-size:17px;line-height:1}
+  .btn.del:hover{color:var(--alert)}
+  .btn.lp{font-size:11.5px;padding:4px 9px;border-radius:8px;background:rgba(118,118,128,.1);color:var(--dim)}
+  .btn.lp.on{background:rgba(52,199,89,.14);color:var(--jade);font-weight:600}
+
+  /* 顶栏分段开关 + 添加按钮 */
+  .top-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .mode-tabs{display:flex;background:var(--seg);padding:2px;border-radius:10px;flex:0 0 auto}
+  .mode-tab{font:inherit;font-size:13px;padding:5px 14px;border-radius:8px;border:0;background:transparent;
+            color:var(--dim);cursor:pointer;font-weight:600;transition:all .18s}
+  .mode-tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+  .btn-add-main{flex:1;max-width:130px;height:32px;border-radius:10px;font-size:13px}
+
+  /* iOS Spotlight 智能快录输入栏 */
+  .smart-bar{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:12px;
+             padding:5px 6px 5px 12px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.04);
+             border:1px solid rgba(0,122,255,.15);transition:border-color .18s,box-shadow .18s}
+  .smart-bar:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+  .smart-ico{color:var(--gold);font-size:15px;flex:0 0 auto;user-select:none}
+  .smart-inp{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:13.5px;
+             color:var(--ink);padding:5px 0;outline:none}
+  .smart-inp::placeholder{color:#AEAEB2}
+  .smart-btn{flex:0 0 auto;border:0;background:var(--gold);color:#fff;font:600 12.5px inherit;
+             padding:6px 12px;border-radius:9px;cursor:pointer;transition:transform .12s}
+  .smart-btn:active{transform:scale(.95)}
+
+  /* 智能解析确认卡片 */
+  .parse-box{background:var(--bg);border-radius:12px;padding:10px 12px;margin:8px 0 12px;text-align:left;font-size:13px}
+  .parse-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+  .parse-row + .parse-row{border-top:1px solid var(--line)}
+  .parse-k{color:var(--dim);font-size:12px}
+  .parse-v{font-weight:600;color:var(--ink)}
+  .parse-v.hl{color:var(--gold)}
+  .parse-isles{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+  .parse-isle{border:0;background:#fff;color:var(--ink);border-radius:7px;padding:5px 0;font:600 12px inherit;cursor:pointer}
+  .parse-isle.on{background:var(--gold);color:#fff}
+
+  /* 小队联机卡片 */
+  .team-card{margin-bottom:12px;background:var(--panel);border-radius:14px;padding:12px 14px;
+             box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .team-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .team-status{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+  .dot{width:8px;height:8px;border-radius:50%;background:#C7C7CC;display:inline-block}
+  .dot.live{background:var(--jade);box-shadow:0 0 0 3px rgba(52,199,89,.2)}
+  .dot.wait{background:var(--amber)}
+  .team-actions{display:flex;gap:6px}
+  .team-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+  @media(min-width:560px){.team-grid{grid-template-columns:1fr 1fr}}
+  .team-box{background:var(--bg);border-radius:10px;padding:9px 10px}
+  .squad-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .squad-list:empty{display:none}
+  .squad-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border-radius:999px;
+    background:var(--panel);border:1px solid rgba(128,128,128,.3);font-size:12px;cursor:pointer;color:inherit}
+  .squad-chip.on{background:rgba(52,199,89,.15);border-color:var(--jade);color:var(--jade);font-weight:600}
+  .squad-chip .sq-x{border:0;background:transparent;color:inherit;font-size:14px;line-height:1;padding:0 4px;cursor:pointer;opacity:.7}
+  .team-box h3{margin:0 0 6px;font-size:12px;color:var(--dim);font-weight:600}
+  .input-grp{display:flex;gap:6px;align-items:center}
+  .inp-sm{flex:1;min-width:0;border:0;border-radius:8px;padding:6px 10px;font:inherit;
+          font-size:13px;background:#fff;color:var(--ink);outline:none}
+  .sync-log{margin-top:5px;font-size:11px;color:var(--dim)}
+
+  .err{color:var(--alert);font-size:13px;margin:8px 0 0}
+  .cat{background:var(--bg);color:var(--dim);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:500}
+
+  /* 分类胶囊栏 */
+  .tabs-wrap{margin-bottom:8px;display:flex;align-items:center}
+  .tabs{flex:1;display:flex;gap:6px;overflow-x:auto;padding:2px 0;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;font:inherit;font-size:13px;font-weight:500;padding:6px 13px;border-radius:999px;
+       border:0;background:var(--panel);color:var(--dim);cursor:pointer;white-space:nowrap;
+       display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:all .15s}
+  .tab.on{background:var(--ink);color:#fff;font-weight:600}
+  .tab.plus{color:var(--gold);background:rgba(0,122,255,.08);font-weight:600}
+  .tab.mgr{color:var(--dim);font-size:12px;background:transparent;box-shadow:none;padding:6px 8px}
+  .tab.mgr.active{color:var(--alert);font-weight:600}
+  .tab-del{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+           border-radius:50%;background:rgba(255,59,48,.15);color:var(--alert);font-size:11px;font-weight:700}
+
+  /* 二级小类栏 */
+  .subtabs-box{margin-bottom:10px;background:rgba(255,255,255,.7);backdrop-filter:blur(10px);
+               border-radius:12px;padding:8px 10px}
+  .subtabs-head{display:none}
+  .subtabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .subtab{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:8px;border:0;
+          background:var(--panel);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+          box-shadow:0 1px 2px rgba(0,0,0,.04);transition:all .15s}
+  .subtab.on{background:var(--gold);color:#fff;font-weight:600}
+  .subtab.plus{color:var(--gold);background:transparent;box-shadow:none;font-weight:600}
+  .subtab .cnt{font-size:11px;opacity:.65}
+  .subtab.on .cnt{opacity:.9;color:#fff}
+
+  /* 二级小类卡片网格 */
+  .sub-guide{padding:18px 12px;text-align:center}
+  .sub-guide-title{font-size:13px;color:var(--dim);margin:0 0 10px}
+  .sub-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(min-width:560px){.sub-cards{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
+  .sub-card{position:relative;background:var(--panel);border:2px solid var(--gold);border-radius:18px;
+            padding:12px 6px 34px;cursor:pointer;transition:transform .12s;text-align:center;
+            display:flex;flex-direction:column;align-items:center;gap:4px;min-height:176px}
+  .sub-card:active{transform:scale(.97)}
+  .sc-img{width:62px;height:62px;border-radius:50%;overflow:hidden;background:var(--bg);display:flex;
+          align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--gold);
+          border:2px solid var(--line);flex:0 0 auto;margin-top:2px}
+  .sc-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .sc-name{font-weight:600;font-size:14.5px;color:var(--ink);margin-top:4px;word-break:break-all;line-height:1.25}
+  .sc-range{font-size:11px;color:var(--dim)}
+  .sc-stat{font-size:12px;font-weight:700;line-height:1.35;word-break:break-all}
+  .sc-isle{font-size:11.5px;font-weight:600;color:var(--amber);background:var(--bg);border-radius:10px;padding:3px 12px;margin-top:2px}
+  .sc-x{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--alert);
+        color:#fff;font-size:14px;line-height:1;padding:0;cursor:pointer}
+  .sc-add{position:absolute;left:6px;bottom:6px;width:24px;height:24px;border-radius:50%;border:2px solid var(--gold);
+          background:transparent;color:var(--gold);font-size:16px;line-height:1;padding:0;cursor:pointer}
+
+  .catadd{margin-bottom:10px;background:var(--panel);border-radius:14px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .catadd .fld-label{margin:0 0 6px;font-size:13px;color:var(--dim)}
+  .catadd .sheet-btns{margin-top:10px}
+
+  /* 苹果底部弹窗风格表单 */
+  .sheet{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
+         display:flex;align-items:flex-end;justify-content:center;padding:0}
+  @media(min-width:560px){.sheet{align-items:center;padding:16px}}
+  .sheet-inner{width:100%;max-width:460px;background:var(--bg);border-radius:20px 20px 0 0;
+               padding:18px 16px 28px;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.12)}
+  @media(min-width:560px){.sheet-inner{border-radius:20px}}
+  .sheet h2{font-size:18px;margin:0 0 12px;font-weight:700;text-align:center}
+  .fld-label{display:block;margin:12px 0 6px;font-size:13px;font-weight:600;color:var(--dim)}
+  .fld{width:100%;background:var(--panel);border:0;border-radius:10px;color:var(--ink);
+       font:inherit;font-size:15px;padding:10px 12px;min-height:42px;outline:none}
+  .fld::placeholder{color:#C7C7CC}
+  select.fld{background:var(--panel);color:var(--ink);font-size:15px}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  .fld-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .fld.num{width:88px;flex:0 0 auto;text-align:center;font-weight:600}
+  .mini{color:var(--dim);font-size:13.5px;min-width:56px}
+  .radios{display:flex;background:var(--seg);padding:2px;border-radius:9px;gap:2px}
+  .radios label{display:flex;align-items:center;justify-content:center;border-radius:7px;
+                padding:0 11px;font-size:13px;cursor:pointer;min-height:34px;color:var(--dim);transition:all .15s}
+  .radios label:has(input:checked){background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .radios input{display:none}
+  .check{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;cursor:pointer;user-select:none}
+  .check input{accent-color:var(--gold);width:17px;height:17px;margin:0}
+  .check.box{background:var(--panel);border-radius:10px;padding:10px 12px;margin-top:12px}
+  .sheet-btns{display:flex;gap:8px;margin-top:18px}
+  .btn-save,.btn-cancel{flex:1;font:inherit;font-size:15px;font-weight:600;min-height:44px;
+                        border-radius:12px;cursor:pointer;border:0}
+  .btn-save{background:var(--gold);color:#fff}
+  .btn-cancel{background:rgba(118,118,128,.12);color:var(--ink)}
+
+  /* 居中模态框 (iOS Alert 风格) */
+  .modal-mask{position:fixed;inset:0;z-index:96;background:rgba(0,0,0,.32);
+              backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal-card{background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border-radius:18px;
+              width:100%;max-width:360px;padding:16px;box-shadow:0 12px 36px rgba(0,0,0,.16)}
+  .modal-title{font-size:16px;font-weight:700;margin:0 0 10px;text-align:center;color:var(--ink)}
+  .modal-sub{font-size:12px;color:var(--dim);margin:0 0 10px;text-align:center}
+  .hms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .hms-cell{background:var(--bg);border-radius:10px;padding:6px;text-align:center}
+  .hms-cell span{display:block;font-size:11px;color:var(--dim);margin-bottom:3px}
+  .hms-cell input{width:100%;border:0;border-radius:7px;padding:6px 2px;
+                  font:600 18px var(--mono);text-align:center;color:var(--ink);background:#fff}
+  .quick-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;justify-content:center}
+  .chip{font:inherit;font-size:12px;padding:4px 9px;border-radius:7px;border:0;
+        background:var(--bg);color:var(--ink);cursor:pointer;font-weight:500}
+  .chip:active{background:var(--seg)}
+  .et-tabs{display:flex;background:var(--seg);padding:2px;border-radius:9px;margin:0 0 12px}
+  .et-tab{flex:1;font:inherit;font-size:12.5px;padding:5px 6px;border-radius:7px;border:0;background:transparent;color:var(--dim);cursor:pointer;font-weight:600}
+  .et-tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  .et-preview{background:var(--bg);border-radius:9px;padding:8px 10px;font-size:12px;color:var(--ink);margin-bottom:10px;text-align:center}
+  .et-preview b{color:var(--gold)}
+
+  /* Toast */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:110;
+         background:rgba(28,28,30,.88);backdrop-filter:blur(10px);color:#fff;padding:8px 16px;
+         border-radius:999px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.18);pointer-events:none}
+
+  /* 提醒横幅 */
+  .banner{margin-bottom:10px;background:rgba(255,59,48,.1);color:var(--alert);
+          border-radius:12px;padding:9px 12px;font-size:13px;font-weight:500}
+  .banner b{font-weight:700}
+
+  /* 主列表 (iOS Inset Grouped 风格) */
+  .board{background:var(--panel);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  #list{list-style:none;margin:0;padding:0}
+  .res{border-top:1px solid var(--line)}
+  #list > li:first-child{border-top:0}
+
+  .trunk{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:12px 14px;cursor:pointer;user-select:none}
+  .trunk:active{background:var(--panel2)}
+  .caret{color:#C7C7CC;font-size:11px;width:12px;transition:transform .18s;text-align:center}
+  .res.open .caret{transform:rotate(90deg);color:var(--gold)}
+  .res-name{font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .per{color:var(--dim);font-size:11.5px;background:var(--bg);padding:1px 6px;border-radius:5px}
+  .summary{margin-left:auto;font-size:12.5px;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
+  .summary.due,.summary.t-red{color:var(--alert);font-weight:600}
+  .summary.t-yellow{color:var(--amber);font-weight:600}
+  .summary.t-green{color:var(--jade);font-weight:600}
+
+  .branches{background:var(--panel2);border-top:1px solid var(--line)}
+  .isle-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;position:relative;
+            padding:8px 14px;border-top:1px solid var(--line)}
+  .branches .isle-row:first-child{border-top:0}
+  .isle-name{color:var(--ink);font-weight:600;font-size:13px;min-width:34px}
+  .isle-phase{font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;display:none}
+  .isle-row.run .isle-phase,.isle-row.win .isle-phase,.isle-row.due .isle-phase{display:inline-block}
+  .isle-row.run .isle-phase{background:rgba(52,199,89,.12);color:var(--jade)}
+  .isle-row.win .isle-phase{background:rgba(255,149,0,.14);color:var(--amber)}
+  .isle-row.due .isle-phase{background:rgba(255,59,48,.14);color:var(--alert)}
+  .isle-row .clock{font-family:var(--mono);font-size:17px;font-weight:600;text-align:right;min-width:76px;
+                   font-variant-numeric:tabular-nums;color:var(--dim);cursor:pointer;padding:1px 4px;border-radius:6px}
+  .isle-row .clock:hover{background:rgba(0,122,255,.08)}
+  .isle-row .next{color:var(--dim);font-size:11.5px;font-variant-numeric:tabular-nums}
+  .isle-row .rec-at{color:#AEAEB2;font-size:11px}
+  .isle-btns{margin-left:auto;display:flex;align-items:center;gap:5px}
+  .isle-row .bar{flex:1 1 100%;height:3px;background:rgba(60,60,67,.08);border-radius:2px;overflow:hidden;position:relative}
+  .isle-row .bar i{display:block;height:100%;width:0;background:var(--jade);border-radius:2px;transition:width .4s linear}
+  .isle-row .bar .win-mark{position:absolute;top:0;bottom:0;width:2px;background:rgba(0,0,0,.25);z-index:2}
+  .isle-row .clear{visibility:hidden}
+  .isle-row.has-rec .clear{visibility:visible}
+  .isle-row.idle .bar{display:none}
+
+  .isle-row.run .clock{color:var(--jade)}
+  .isle-row.run .bar i{background:var(--jade)}
+  .isle-row.win{background:rgba(255,149,0,.04)}
+  .isle-row.win .clock{color:var(--amber)}
+  .isle-row.win .bar i{background:var(--amber)}
+  .isle-row.run.t-yellow .clock{color:var(--amber)}
+  .isle-row.run.t-yellow .bar i{background:var(--amber)}
+  .isle-row.run.t-red .clock,.isle-row.win.t-red .clock{color:var(--alert)}
+  .isle-row.run.t-red .bar i,.isle-row.win.t-red .bar i{background:var(--alert)}
+  .isle-row.due{background:rgba(255,59,48,.05)}
+  .isle-row.due .clock{color:var(--alert);font-family:inherit;font-size:14px;font-weight:700;animation:flash 1.6s ease-in-out infinite}
+  .isle-row.due .bar i{width:100%;background:var(--alert)}
+  @keyframes flash{50%{opacity:.4}}
+
+  .empty{margin:0;padding:32px 16px;color:var(--dim);font-size:13.5px;text-align:center}
+
+  /* iOS 悬浮球与毛玻璃小窗 */
+  .fab-ball{position:fixed;right:14px;bottom:76px;z-index:90;width:48px;height:48px;border-radius:50%;
+            background:rgba(0,122,255,.92);backdrop-filter:blur(8px);color:#fff;
+            box-shadow:0 6px 20px rgba(0,122,255,.32);display:flex;flex-direction:column;align-items:center;
+            justify-content:center;cursor:pointer;user-select:none;touch-action:none;transition:transform .12s}
+  .fab-ball:active{transform:scale(.92)}
+  .fab-ball .fab-ico{font-size:17px;line-height:1}
+  .fab-ball .fab-txt{font-size:9.5px;font-weight:600;margin-top:1px}
+  .fab-ball.open{background:rgba(28,28,30,.9)}
+
+  .quick-float{position:fixed;right:14px;bottom:134px;z-index:91;width:296px;max-width:calc(100vw - 28px);
+               background:rgba(255,255,255,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+               border:1px solid rgba(60,60,67,.08);border-radius:20px;
+               box-shadow:0 12px 36px rgba(0,0,0,.16);padding:12px;color:var(--ink);animation:qfPop .16s ease-out}
+  @keyframes qfPop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+  .qf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .qf-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:5px}
+  .qf-actions{display:flex;align-items:center;gap:4px}
+  .qf-close{border:0;background:var(--bg);color:var(--dim);width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .qf-inp{width:100%;background:var(--bg);border:1px solid transparent;border-radius:10px;
+          color:var(--ink);font:inherit;font-size:13.5px;padding:8px 10px;margin-bottom:8px;outline:none;transition:all .15s}
+  .qf-inp:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+  .qf-inp::placeholder{color:#AEAEB2}
+  .qf-submit{width:100%;border:0;border-radius:11px;background:var(--gold);color:#fff;font:600 13.5px inherit;padding:9px;cursor:pointer}
+  .qf-submit:active{transform:scale(.98)}
+
+  @media (max-width:620px){
+    .summary{margin-left:0;flex-basis:100%;text-align:left;font-size:12px}
+    .trunk{position:relative;padding-right:36px}
+    .trunk .del{position:absolute;right:8px;top:10px}
+    .isle-btns{width:100%;justify-content:flex-end}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <h1>
+      <span id="modeBadge" class="badge-mode">本地</span>
+    </h1>
+    <div class="ctl">
+      <button id="soundBtn" class="btn" aria-pressed="true" type="button">🔔 音效</button>
+      <button id="notifyBtn" class="btn" type="button">通知</button>
+    </div>
+  </header>
+
+  <div class="top-bar">
+    <div class="mode-tabs">
+      <button id="tabModeLocal" class="mode-tab on" type="button">本地</button>
+      <button id="tabModeTeam" class="mode-tab" type="button">小队</button>
+    </div>
+    <span id="modeDescText" hidden></span>
+    <button id="addBtn" class="btn primary btn-add-main" type="button">＋ 添加</button>
+  </div>
+
+  <div class="smart-bar">
+    <span class="smart-ico">⚡</span>
+    <input id="topSmartInp" class="smart-inp" maxlength="50" placeholder="输入如：黑曜石宝箱 1岛 刚刚 / 前1分钟">
+    <button id="topSmartBtn" class="smart-btn" type="button">录入</button>
+  </div>
+
+  <section id="teamCard" class="team-card" hidden>
+    <div class="team-top">
+      <div class="team-status">
+        <i id="syncDot" class="dot"></i>
+        <span id="syncStatusText">未连接小队</span>
+      </div>
+      <div class="team-actions">
+        <button id="pullNowBtn" class="btn" type="button" hidden>拉取</button>
+        <button id="pushNowBtn" class="btn" type="button" hidden>推送</button>
+        <button id="leaveRoomBtn" class="btn" type="button" hidden>断开</button>
+      </div>
+    </div>
+
+    <div class="team-grid">
+      <div class="team-box">
+        <h3>小队暗号实时同步（可同时加入5个）</h3>
+        <div class="input-grp">
+          <input id="roomCodeInp" class="inp-sm" maxlength="24" placeholder="输入暗号...">
+          <button id="joinRoomBtn" class="btn primary" type="button">连接</button>
+          <button id="genRoomBtn" class="btn" type="button">随机</button>
+        </div>
+        <div class="squad-list" id="squadList"></div>
+        <div class="sync-log"><span id="lastSyncInfo">输入相同暗号即可同屏（最多同时加入5个小队）</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="codeCard" class="team-card">
+    <div class="team-box">
+      <h3>口令码分享 / 导入（本地计时器）</h3>
+      <div class="input-grp">
+        <button id="exportCodeBtn" class="btn" style="flex:0 0 auto" type="button">复制口令</button>
+        <input id="importCodeInp" class="inp-sm" placeholder="粘贴口令...">
+        <button id="importCodeBtn" class="btn jade" type="button">导入</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="tabs-wrap">
+    <nav id="tabs" class="tabs" aria-label="分类"></nav>
+  </div>
+
+  <div id="subTabsBox" class="subtabs-box" hidden>
+    <div class="subtabs-head"><span id="subTabsTitle"></span></div>
+    <div id="subTabs" class="subtabs"></div>
+  </div>
+
+  <div id="catAdd" class="catadd" hidden>
+    <label id="catAddLabel" class="fld-label" for="catName">新增分类</label>
+    <input id="catName" class="fld" maxlength="12" placeholder="输入名称">
+    <p id="catErr" class="err" hidden></p>
+    <div class="sheet-btns">
+      <button id="catOk" class="btn-save" type="button">添加</button>
+      <button id="catCancel" class="btn-cancel" type="button">取消</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner" role="status" hidden></div>
+
+  <section class="board">
+    <div id="subGuide" class="sub-guide" hidden></div>
+    <ul id="list"></ul>
+    <p id="empty" class="empty">暂无物质，点击右上角「＋ 添加」</p>
+  </section>
+
+</div>
+
+<!-- 添加物质弹窗 -->
+<section id="sheet" class="sheet" hidden aria-label="添加物质">
+  <div class="sheet-inner">
+    <h2>添加物质</h2>
+
+    <span class="fld-label">分类与物品</span>
+    <div class="fld-row">
+      <select id="sCat" class="fld" style="flex:1"></select>
+      <select id="sSubCatSel" class="fld" style="flex:1"></select>
+    </div>
+    <input id="sSubCatNew" class="fld" style="margin-top:8px" maxlength="16" placeholder="输入新物品名称" hidden>
+
+    <label class="fld-label" for="sName">备注名称（选填）</label>
+    <input id="sName" class="fld" maxlength="20" placeholder="默认使用上方物品名">
+
+    <span class="fld-label">刷新周期</span>
+    <label class="check" style="margin:4px 0 8px"><input type="checkbox" id="sRange" checked><span>范围时段（如 2~6 小时内刷新）</span></label>
+
+    <div id="rangeBox">
+      <div class="fld-row">
+        <span class="mini">最早</span>
+        <input id="sEarly" class="fld num" type="number" inputmode="decimal" min="0" value="2">
+        <div class="radios">
+          <label><input type="radio" name="eunit" value="min"><span>分</span></label>
+          <label><input type="radio" name="eunit" value="hour" checked><span>时</span></label>
+          <label><input type="radio" name="eunit" value="day"><span>天</span></label>
+        </div>
+      </div>
+      <div class="fld-row" style="margin-top:8px">
+        <span class="mini">最晚</span>
+        <input id="sLate" class="fld num" type="number" inputmode="decimal" min="0" value="6">
+        <div class="radios">
+          <label><input type="radio" name="lunit" value="min"><span>分</span></label>
+          <label><input type="radio" name="lunit" value="hour" checked><span>时</span></label>
+          <label><input type="radio" name="lunit" value="day"><span>天</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="fld-row" id="singleRow" hidden>
+      <span class="mini">固定</span>
+      <input id="sTime" class="fld num" type="number" inputmode="decimal" min="0" value="6">
+      <div class="radios">
+        <label><input type="radio" name="unit" value="min"><span>分</span></label>
+        <label><input type="radio" name="unit" value="hour" checked><span>时</span></label>
+        <label><input type="radio" name="unit" value="day"><span>天</span></label>
+      </div>
+    </div>
+
+    <label class="check box"><input type="checkbox" id="sLoop"><span>到点自动循环下一轮</span></label>
+
+    <p id="addErr" class="err" hidden></p>
+
+    <div class="sheet-btns">
+      <button id="cancelBtn" class="btn-cancel" type="button">取消</button>
+      <button id="saveBtn" class="btn-save" type="button">保存</button>
+    </div>
+  </div>
+</section>
+
+<section id="editTimeModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 id="editTimeTitle" class="modal-title">修改时间</h3>
+
+    <div class="et-tabs">
+      <button id="etTabRemain" class="et-tab on" type="button">剩余时间</button>
+      <button id="etTabGot" class="et-tab" type="button">获取时间</button>
+    </div>
+
+    <div id="etPaneRemain">
+      <div class="hms-grid">
+        <div class="hms-cell">
+          <span>时</span>
+          <input id="etHour" type="number" min="0" max="999" value="0" inputmode="numeric">
+        </div>
+        <div class="hms-cell">
+          <span>分</span>
+          <input id="etMin" type="number" min="0" max="59" value="30" inputmode="numeric">
+        </div>
+        <div class="hms-cell">
+          <span>秒</span>
+          <input id="etSec" type="number" min="0" max="59" value="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="quick-chips" id="etRemainChips">
+        <button type="button" class="chip" data-adj="-300">-5分</button>
+        <button type="button" class="chip" data-adj="-60">-1分</button>
+        <button type="button" class="chip" data-adj="60">+1分</button>
+        <button type="button" class="chip" data-adj="300">+5分</button>
+        <button type="button" class="chip" data-set="900">15分</button>
+        <button type="button" class="chip" data-set="1800">30分</button>
+        <button type="button" class="chip" data-set="3600">1小时</button>
+      </div>
+    </div>
+
+    <div id="etPaneGot" hidden>
+      <div class="hms-grid">
+        <div class="hms-cell">
+          <span>日期</span>
+          <select id="gotDay" style="width:100%;border:0;border-radius:7px;padding:6px 2px;font:600 15px inherit;text-align:center;color:var(--ink);background:#fff;height:34px">
+            <option value="0">今天</option>
+            <option value="-1">昨天</option>
+          </select>
+        </div>
+        <div class="hms-cell">
+          <span>时</span>
+          <input id="gotHour" type="number" min="0" max="23" value="12" inputmode="numeric">
+        </div>
+        <div class="hms-cell">
+          <span>分</span>
+          <input id="gotMin" type="number" min="0" max="59" value="0" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="quick-chips" id="etGotChips">
+        <button type="button" class="chip" data-ago="0">刚刚</button>
+        <button type="button" class="chip" data-ago="5">5分前</button>
+        <button type="button" class="chip" data-ago="10">10分前</button>
+        <button type="button" class="chip" data-ago="30">半小时前</button>
+      </div>
+
+      <div id="etGotPreview" class="et-preview"></div>
+    </div>
+
+    <div class="sheet-btns" style="margin-top:8px">
+      <button id="etCancelBtn" class="btn-cancel" type="button" style="min-height:40px;font-size:14px">取消</button>
+      <button id="etSaveBtn" class="btn-save" type="button" style="min-height:40px;font-size:14px">确定</button>
+    </div>
+  </div>
+</section>
+
+<section id="confirmModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 id="cfmTitle" class="modal-title">确认</h3>
+    <p id="cfmMsg" class="modal-sub" style="font-size:14px;color:var(--ink);margin:6px 0 14px"></p>
+    <div class="sheet-btns" style="margin-top:6px">
+      <button id="cfmCancelBtn" class="btn-cancel" type="button" style="min-height:40px;font-size:14px">取消</button>
+      <button id="cfmOkBtn" class="btn-save" type="button" style="min-height:40px;font-size:14px;background:var(--alert);box-shadow:none">删除</button>
+    </div>
+  </div>
+</section>
+
+<section id="smartConfirmModal" class="modal-mask" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 class="modal-title">确认修改时间</h3>
+    <div class="parse-box">
+      <div class="parse-row">
+        <span class="parse-k">匹配物品</span>
+        <span id="scResName" class="parse-v hl">-</span>
+      </div>
+      <div class="parse-row">
+        <span class="parse-k">动作识别</span>
+        <span id="scTimeDesc" class="parse-v">-</span>
+      </div>
+      <div class="parse-row">
+        <span class="parse-k">预计下次刷新</span>
+        <span id="scNextDesc" class="parse-v" style="color:var(--jade)">-</span>
+      </div>
+      <div style="margin-top:6px">
+        <span class="parse-k">目标岛屿（可点选更改）</span>
+        <div id="scIslesGrid" class="parse-isles"></div>
+      </div>
+    </div>
+    <div class="sheet-btns" style="margin-top:8px">
+      <button id="scCancelBtn" class="btn-cancel" type="button" style="min-height:40px;font-size:14px">取消</button>
+      <button id="scOkBtn" class="btn-save" type="button" style="min-height:40px;font-size:14px">确认修改</button>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast" hidden></div>
+
+<!-- 悬浮球与极简快记输入窗 -->
+<div id="fabBall" class="fab-ball" role="button" tabindex="0" title="悬浮快记">
+  <span class="fab-ico">⏱</span>
+  <span class="fab-txt">快记</span>
+</div>
+
+<aside id="quickFloat" class="quick-float" hidden aria-label="快记小窗">
+  <div class="qf-head">
+    <div class="qf-title">
+      <span>快记</span>
+      <span id="qfModeTag" style="font-size:10px;font-weight:600;color:var(--gold);background:rgba(0,122,255,.1);padding:1px 6px;border-radius:99px">本地</span>
+    </div>
+    <div class="qf-actions">
+      <button id="qfCloseBtn" class="qf-close" type="button" aria-label="关闭">×</button>
+    </div>
+  </div>
+
+  <input id="qfSmartInp" class="qf-inp" maxlength="50" placeholder="如：黑曜石宝箱 2岛 前1分钟">
+  <div class="quick-chips" id="qfSmartEx" style="margin-bottom:8px;justify-content:flex-start">
+    <button type="button" class="chip" data-fill=" 刚刚">刚刚</button>
+    <button type="button" class="chip" data-fill=" 前1分钟">前1分</button>
+    <button type="button" class="chip" data-fill=" 前3分钟">前3分</button>
+    <button type="button" class="chip" data-fill=" 1岛">1岛</button>
+  </div>
+  <button id="qfSmartSubmit" class="qf-submit" type="button">解析并确认</button>
+</aside>
+
+<script>
+(function(){
+"use strict";
+var KEY_LOCAL = "czmf.timer.local.v3";
+var KEY_TEAM  = "czmf.timer.team.v3";
+var KEY_MODE  = "czmf.timer.mode.v3";
+var KEY_SQUADS = "czmf.timer.squads.v4";
+var MAX_SQUADS = 5;
+var ISLES = 10;
+var INITIAL_CATS = ["植物", "宝箱", "世界boos", "砖头", "矿石"];
+var INITIAL_SUBCATS = {
+  "宝箱": ["黑曜石宝箱", "水晶宝箱", "罕见宝箱", "金宝箱"],
+  "矿石": ["水晶矿", "黑曜石矿", "金矿", "银矿"],
+  "植物": ["龙血树", "星辰花", "罕见植物"],
+  "世界boos": ["暗黑霸王龙", "奇美拉", "骨龙"],
+  "砖头": ["远古砖头", "遗迹石块"]
+};
+var $ = function(s){ return document.querySelector(s); };
+
+var listEl = $("#list"), emptyEl = $("#empty"), bannerEl = $("#banner"), subGuideEl = $("#subGuide"),
+    soundBtn = $("#soundBtn"), notifyBtn = $("#notifyBtn"),
+    sheetEl = $("#sheet"), addBtn = $("#addBtn"), addErr = $("#addErr"),
+    sName = $("#sName"), sTime = $("#sTime"), sRange = $("#sRange"), rangeBox = $("#rangeBox"),
+    singleRow = $("#singleRow"),
+    sEarly = $("#sEarly"), sLate = $("#sLate"),
+    sCat = $("#sCat"), sSubCatSel = $("#sSubCatSel"), sSubCatNew = $("#sSubCatNew"),
+    sLoop = $("#sLoop"),
+    tabsEl = $("#tabs"), subTabsBox = $("#subTabsBox"), subTabsEl = $("#subTabs"),
+    catAdd = $("#catAdd"), catAddLabel = $("#catAddLabel"),
+    catName = $("#catName"), catErr = $("#catErr");
+
+var currentMode = "local"; // "local" 或 "team"
+var localData = { resources: [], allCats: [], subCatsMap: {}, tab: "全部", subTab: "", subImgs: {} };
+var teamData  = { resources: [], allCats: [], subCatsMap: {}, tab: "全部", subTab: "", roomCode: "", updatedAt: Date.now(), subImgs: {} };
+
+var activeTab = "全部";
+var activeSubTab = "";
+var catManageMode = false;
+var catAddTarget = "cat";
+var soundOn = true;
+
+var rowState = {};
+var loopCache = {};
+var lastRound = {};
+var recentLoopAt = {};
+var booted = false;
+var lastBeepAt = 0;
+var titleTimer = null, titleTick = 0;
+var bannerText = "";
+var audioCtx = null;
+
+var clientId = "u_" + Math.random().toString(36).slice(2, 9);
+var squads = [];      // 已加入的小队 [{code, data}]，最多5个
+var activeSquad = ""; // 当前查看的小队暗号
+var conns = {};       // 每个小队各自的连接 {code: {es, bc, status, msg}}
+var syncDebounce = null;
+var warned = {};
+
+var qfSelectedIsle = 0;
+var qfSelectedResId = "";
+
+function showToast(msg){
+  var el = $("#toast");
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(function(){ el.hidden = true; }, 2800);
+}
+
+var cfmCallback = null;
+function askConfirm(title, msg, onOk){
+  $("#cfmTitle").textContent = title;
+  $("#cfmMsg").textContent = msg;
+  cfmCallback = onOk;
+  $("#confirmModal").hidden = false;
+}
+$("#cfmOkBtn").addEventListener("click", function(){
+  $("#confirmModal").hidden = true;
+  if(cfmCallback) cfmCallback();
+  cfmCallback = null;
+});
+$("#cfmCancelBtn").addEventListener("click", function(){
+  $("#confirmModal").hidden = true;
+  cfmCallback = null;
+});
+
+function cloneDefaultSubCats(){
+  var m = {};
+  for(var k in INITIAL_SUBCATS){
+    if(Object.prototype.hasOwnProperty.call(INITIAL_SUBCATS, k)){
+      m[k] = INITIAL_SUBCATS[k].slice();
+    }
+  }
+  return m;
+}
+
+function normalizeResources(arr){
+  if(!Array.isArray(arr)) return [];
+  return arr.filter(function(r){ return r && r.id && r.name && Array.isArray(r.starts); }).map(function(r){
+    while(r.starts.length < ISLES) r.starts.push(null);
+    r.starts.length = ISLES;
+    if(!Array.isArray(r.loops)) r.loops = [];
+    while(r.loops.length < ISLES) r.loops.push(null);
+    r.loops.length = ISLES;
+    if(!Array.isArray(r.customEnd)) r.customEnd = [];
+    while(r.customEnd.length < ISLES) r.customEnd.push(null);
+    r.customEnd.length = ISLES;
+    if(typeof r.subcat !== "string") r.subcat = "";
+    r.loop = (r.loop === true);
+    return r;
+  });
+}
+
+function ensureSubCatsRegistered(targetStore){
+  targetStore.allCats.forEach(function(c){
+    if(!Array.isArray(targetStore.subCatsMap[c])) targetStore.subCatsMap[c] = [];
+  });
+  targetStore.resources.forEach(function(r){
+    if(r.cat && r.cat !== "自定义" && r.subcat){
+      if(!Array.isArray(targetStore.subCatsMap[r.cat])) targetStore.subCatsMap[r.cat] = [];
+      if(targetStore.subCatsMap[r.cat].indexOf(r.subcat) < 0) targetStore.subCatsMap[r.cat].push(r.subcat);
+    }
+  });
+}
+
+function loadStore(key){
+  try{
+    var raw = localStorage.getItem(key);
+    if(raw){
+      var d = JSON.parse(raw);
+      var cats = INITIAL_CATS.slice();
+      if(Array.isArray(d.allCats)){
+        cats = d.allCats.filter(function(c){ return typeof c === "string" && c.trim() && c !== "全部"; });
+      }
+      var scMap = cloneDefaultSubCats();
+      if(d.subCatsMap && typeof d.subCatsMap === "object"){
+        for(var k in d.subCatsMap){
+          if(Array.isArray(d.subCatsMap[k])){
+            scMap[k] = d.subCatsMap[k].filter(function(s){ return typeof s === "string" && s.trim(); });
+          }
+        }
+      }
+      return {
+        resources: normalizeResources(d.resources),
+        allCats: cats,
+        subCatsMap: scMap,
+        tab: typeof d.tab === "string" ? d.tab : "全部",
+        subTab: typeof d.subTab === "string" ? d.subTab : "",
+        roomCode: typeof d.roomCode === "string" ? d.roomCode : "",
+        updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
+        subImgs: cleanImgs(d.subImgs)
+      };
+    }
+  }catch(e){}
+  return {
+    resources: [],
+    allCats: INITIAL_CATS.slice(),
+    subCatsMap: cloneDefaultSubCats(),
+    tab: "全部",
+    subTab: "",
+    roomCode: "",
+    updatedAt: Date.now(),
+    subImgs: {}
+  };
+}
+
+function cleanImgs(o){
+  var r = {};
+  if(o && typeof o === "object"){
+    for(var k in o){
+      if(Object.prototype.hasOwnProperty.call(o, k) && typeof o[k] === "string" &&
+         o[k].indexOf("data:image/") === 0 && o[k].length < 40000) r[k] = o[k];
+    }
+  }
+  return r;
+}
+function imgKey(cat, sub){ return cat + "/" + sub; }
+function curStore(){ return currentMode === "team" ? teamData : localData; }
+
+function normalizeStore(d){
+  d = d || {};
+  var cats = INITIAL_CATS.slice();
+  if(Array.isArray(d.allCats)){
+    cats = d.allCats.filter(function(c){ return typeof c === "string" && c.trim() && c !== "全部"; });
+  }
+  var scMap = cloneDefaultSubCats();
+  if(d.subCatsMap && typeof d.subCatsMap === "object"){
+    for(var k in d.subCatsMap){
+      if(Array.isArray(d.subCatsMap[k])){
+        scMap[k] = d.subCatsMap[k].filter(function(s){ return typeof s === "string" && s.trim(); });
+      }
+    }
+  }
+  return {
+    resources: normalizeResources(d.resources),
+    allCats: cats,
+    subCatsMap: scMap,
+    tab: typeof d.tab === "string" ? d.tab : "全部",
+    subTab: typeof d.subTab === "string" ? d.subTab : "",
+    roomCode: typeof d.roomCode === "string" ? d.roomCode : "",
+    updatedAt: typeof d.updatedAt === "number" ? d.updatedAt : Date.now(),
+    subImgs: cleanImgs(d.subImgs)
+  };
+}
+
+function squadByCode(code){
+  for(var i = 0; i < squads.length; i++){ if(squads[i].code === code) return squads[i]; }
+  return null;
+}
+
+function saveSquads(){
+  try{
+    localStorage.setItem(KEY_SQUADS, JSON.stringify({
+      active: activeSquad,
+      list: squads.map(function(q){ return {code: q.code, data: q.data}; })
+    }));
+  }catch(e){}
+}
+
+function loadAll(){
+  try{
+    var m = localStorage.getItem(KEY_MODE);
+    if(m === "team") currentMode = "team";
+    else currentMode = "local";
+  }catch(e){ currentMode = "local"; }
+
+  localData = loadStore(KEY_LOCAL);
+  teamData = loadStore(KEY_TEAM);
+
+  ensureSubCatsRegistered(localData);
+  ensureSubCatsRegistered(teamData);
+
+  squads = []; activeSquad = "";
+  var hasSquadKey = false;
+  try{
+    var rawSq = localStorage.getItem(KEY_SQUADS);
+    if(rawSq !== null){
+      hasSquadKey = true;
+      var sq = JSON.parse(rawSq);
+      if(sq && Array.isArray(sq.list)){
+        sq.list.forEach(function(q){
+          if(q && typeof q.code === "string" && q.code && squads.length < MAX_SQUADS && !squadByCode(q.code)){
+            var dd = normalizeStore(q.data);
+            dd.roomCode = q.code;
+            ensureSubCatsRegistered(dd);
+            squads.push({code: q.code, data: dd});
+          }
+        });
+        if(typeof sq.active === "string" && squadByCode(sq.active)) activeSquad = sq.active;
+      }
+    }
+  }catch(e){}
+  if(!hasSquadKey && teamData.roomCode){
+    squads.push({code: teamData.roomCode, data: teamData});
+    activeSquad = teamData.roomCode;
+  }
+  if(!activeSquad && squads.length) activeSquad = squads[0].code;
+  if(activeSquad) teamData = squadByCode(activeSquad).data;
+
+  var activeStore = currentMode === "team" ? teamData : localData;
+  activeTab = activeStore.tab;
+  activeSubTab = activeStore.subTab;
+  if(tabsList().indexOf(activeTab) < 0){
+    activeTab = "全部";
+    activeSubTab = "";
+  }
+}
+
+function saveActive(fromRemote){
+  try{ localStorage.setItem(KEY_MODE, currentMode); }catch(e){}
+  if(currentMode === "team"){
+    if(!fromRemote) teamData.updatedAt = Date.now();
+    teamData.tab = activeTab;
+    teamData.subTab = activeSubTab;
+    if(activeSquad){ saveSquads(); }
+    else{ try{ localStorage.setItem(KEY_TEAM, JSON.stringify(teamData)); }catch(e){} }
+    if(!fromRemote) broadcastChange();
+  }else{
+    localData.tab = activeTab;
+    localData.subTab = activeSubTab;
+    try{ localStorage.setItem(KEY_LOCAL, JSON.stringify(localData)); }catch(e){}
+  }
+}
+
+function currentResources(){ return currentMode === "team" ? teamData.resources : localData.resources; }
+function currentCats(){ return currentMode === "team" ? teamData.allCats : localData.allCats; }
+function currentSubCatsMap(){ return currentMode === "team" ? teamData.subCatsMap : localData.subCatsMap; }
+
+function p2(n){ return n < 10 ? "0" + n : "" + n; }
+function fmtRemain(ms){
+  var s = Math.max(0, Math.ceil(ms / 1000));
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  return h > 0 ? h + ":" + p2(m) + ":" + p2(ss) : m + ":" + p2(ss);
+}
+function fmtOver(ms){
+  var m = Math.floor(ms / 60000);
+  if(m < 1) return "不到 1 分钟";
+  if(m < 60) return m + " 分钟";
+  var h = Math.floor(m / 60), mm = m % 60;
+  return mm ? h + " 小时 " + mm + " 分" : h + " 小时";
+}
+var WD = ["周日","周一","周二","周三","周四","周五","周六"];
+function dayDiff(ts){
+  var d = new Date(ts), now = new Date();
+  var day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var that = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((that - day0) / 86400000);
+}
+function fmtWhen(ts){
+  var d = new Date(ts);
+  var diff = dayDiff(ts);
+  var hm = p2(d.getHours()) + ":" + p2(d.getMinutes());
+  if(diff === 0) return "今天 " + hm;
+  if(diff === 1) return "明天 " + hm;
+  if(diff > 1 && diff < 7) return WD[d.getDay()] + " " + hm;
+  return (d.getMonth() + 1) + "月" + d.getDate() + "日 " + hm;
+}
+function fmtHM(ts){
+  var d = new Date(ts);
+  return p2(d.getHours()) + ":" + p2(d.getMinutes());
+}
+function fmtShortClock(ts){
+  var d = new Date(ts);
+  var diff = dayDiff(ts);
+  var hm = p2(d.getHours()) + ":" + p2(d.getMinutes());
+  if(diff === 0) return hm;
+  if(diff === -1) return "昨天 " + hm;
+  return (d.getMonth() + 1) + "/" + d.getDate() + " " + hm;
+}
+function fmtMins(mins){
+  var h = Math.floor(mins / 60), m = mins % 60;
+  if(h && m) return h + "小时" + m + "分";
+  if(h) return h + "小时";
+  return m + "分钟";
+}
+
+function bounds(res){
+  if(res.kind === "range"){
+    var e = res.early || 120, l = res.late || 360;
+    return [Math.max(1, e), Math.max(1, Math.max(e, l))];
+  }
+  var b = res.base || 360;
+  return [b, b];
+}
+
+function labelOf(res){
+  var b = bounds(res);
+  if(b[0] < b[1]){
+    return fmtMins(b[0]) + "~" + fmtMins(b[1]);
+  }
+  return fmtMins(b[1]);
+}
+
+function effLoop(res, i){
+  var v = res.loops ? res.loops[i] : null;
+  return (v === true || v === false) ? v : res.loop === true;
+}
+
+function effectiveStart(res, i, now){
+  var s0 = res.starts[i];
+  if(!s0) return null;
+  var b = bounds(res);
+  var earlyMs = b[0] * 60000;
+  var lateMs  = b[1] * 60000;
+  var hasWin  = (b[1] > b[0]);
+  var cEnd = (res.customEnd && res.customEnd[i]) ? res.customEnd[i] : null;
+
+  if(!effLoop(res, i)){
+    if(cEnd){
+      var customDur = Math.max(1000, cEnd - s0);
+      return {start: s0, winStart: cEnd, end: cEnd, durMs: customDur, earlyRatio: 1, hasWin: false, round: 0, edited: true};
+    }
+    return {
+      start: s0,
+      winStart: s0 + earlyMs,
+      end: s0 + lateMs,
+      durMs: lateMs,
+      earlyRatio: lateMs > 0 ? (earlyMs / lateMs) : 1,
+      hasWin: hasWin,
+      round: 0,
+      edited: false
+    };
+  }
+
+  var curStart = s0;
+  var round = 0;
+  if(cEnd && now < cEnd){
+    var cDur = Math.max(1000, cEnd - s0);
+    return {start: s0, winStart: cEnd, end: cEnd, durMs: cDur, earlyRatio: 1, hasWin: false, round: 0, edited: true};
+  }
+  if(cEnd && now >= cEnd){
+    curStart = cEnd;
+    round = 1;
+  }
+  if(lateMs > 0 && now >= curStart + lateMs){
+    var jump = Math.floor((now - curStart) / lateMs);
+    curStart += jump * lateMs;
+    round += jump;
+  }
+  return {
+    start: curStart,
+    winStart: curStart + earlyMs,
+    end: curStart + lateMs,
+    durMs: lateMs,
+    earlyRatio: lateMs > 0 ? (earlyMs / lateMs) : 1,
+    hasWin: hasWin,
+    round: round,
+    edited: false
+  };
+}
+
+function isleStateAt(eff, now){
+  if(now >= eff.end) return "due";
+  if(eff.hasWin && now >= eff.winStart) return "win";
+  return "run";
+}
+
+function toneOf(remMs){
+  if(remMs >= 3600000) return "green";
+  if(remMs >= 600000) return "yellow";
+  return "red";
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+
+function unlockAudio(){
+  if(!soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+}
+
+function beep(){
+  if(!soundOn) return;
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    var t0 = audioCtx.currentTime + 0.02;
+    [[0, 880], [0.18, 880], [0.36, 1174.66]].forEach(function(n){
+      var dt = n[0], f = n[1];
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + dt);
+      g.gain.exponentialRampToValueAtTime(0.3, t0 + dt + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.22);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0 + dt); o.stop(t0 + dt + 0.25);
+    });
+  }catch(e){}
+}
+
+function notify(title, body){
+  try{
+    if(("Notification" in window) && Notification.permission === "granted"){
+      new Notification(title, {body: body});
+    }
+  }catch(e){}
+}
+
+function updateNotifyBtn(){
+  if(!("Notification" in window)){
+    notifyBtn.hidden = true;
+    return;
+  }
+  var p = Notification.permission;
+  notifyBtn.textContent = p === "granted" ? "通知:开" : "通知";
+}
+notifyBtn.addEventListener("click", function(){
+  if(!("Notification" in window)) return;
+  try{
+    Notification.requestPermission().then(function(){ updateNotifyBtn(); });
+  }catch(e){ updateNotifyBtn(); }
+});
+
+function updateSoundBtn(){
+  soundBtn.textContent = soundOn ? "🔔 音效" : "🔕 静音";
+  soundBtn.setAttribute("aria-pressed", String(soundOn));
+}
+soundBtn.addEventListener("click", function(){
+  soundOn = !soundOn;
+  updateSoundBtn(); saveActive(true);
+  if(soundOn) unlockAudio();
+});
+
+function tabsList(){
+  return ["全部"].concat(currentCats());
+}
+
+function subCatsOf(cat){
+  if(!cat || cat === "全部" || cat === "自定义") return [];
+  var map = currentSubCatsMap();
+  var list = Array.isArray(map[cat]) ? map[cat].slice() : [];
+  currentResources().forEach(function(r){
+    if(r.cat === cat && r.subcat && list.indexOf(r.subcat) < 0){
+      list.push(r.subcat);
+    }
+  });
+  return list;
+}
+
+function renderTabs(){
+  tabsEl.innerHTML = "";
+  tabsList().forEach(function(name){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "tab" + (name === activeTab ? " on" : "");
+    var span = document.createElement("span");
+    span.textContent = name;
+    b.appendChild(span);
+
+    if(name !== "全部" && catManageMode){
+      var delIcon = document.createElement("span");
+      delIcon.className = "tab-del";
+      delIcon.textContent = "×";
+      delIcon.title = "删除分类「" + name + "」";
+      delIcon.addEventListener("click", function(e){
+        e.stopPropagation();
+        deleteCategory(name);
+      });
+      b.appendChild(delIcon);
+    }
+
+    b.addEventListener("click", function(){
+      if(catManageMode && name !== "全部"){
+        deleteCategory(name);
+      }else{
+        switchTab(name);
+      }
+    });
+    tabsEl.appendChild(b);
+  });
+
+  var plus = document.createElement("button");
+  plus.type = "button";
+  plus.className = "tab plus";
+  plus.textContent = "＋ 分类";
+  plus.addEventListener("click", function(){ openCatAdd("cat"); });
+  tabsEl.appendChild(plus);
+
+  var cats = currentCats();
+  if(cats.length > 0){
+    var mgr = document.createElement("button");
+    mgr.type = "button";
+    mgr.className = "tab mgr" + (catManageMode ? " active" : "");
+    mgr.textContent = catManageMode ? "完成" : "编辑";
+    mgr.addEventListener("click", function(){
+      catManageMode = !catManageMode;
+      renderTabs();
+      renderSubTabs();
+    });
+    tabsEl.appendChild(mgr);
+  }
+  renderSubTabs();
+}
+
+function renderSubTabs(){
+  if(activeTab === "全部"){
+    subTabsBox.hidden = true;
+    return;
+  }
+  subTabsBox.hidden = false;
+  var subs = subCatsOf(activeTab);
+  var resourcesList = currentResources();
+  var uncatCount = resourcesList.filter(function(r){ return r.cat === activeTab && !r.subcat; }).length;
+
+  subTabsEl.innerHTML = "";
+
+  subs.forEach(function(sc){
+    var cnt = resourcesList.filter(function(r){ return r.cat === activeTab && r.subcat === sc; }).length;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "subtab" + (activeSubTab === sc ? " on" : "");
+    var sp = document.createElement("span");
+    sp.textContent = sc;
+    b.appendChild(sp);
+
+    var badge = document.createElement("span");
+    badge.className = "cnt";
+    badge.textContent = cnt;
+    b.appendChild(badge);
+
+    if(catManageMode){
+      var delIcon = document.createElement("span");
+      delIcon.className = "tab-del";
+      delIcon.textContent = "×";
+      delIcon.addEventListener("click", function(e){
+        e.stopPropagation();
+        deleteSubCategory(activeTab, sc);
+      });
+      b.appendChild(delIcon);
+    }
+
+    b.addEventListener("click", function(){
+      if(catManageMode){
+        deleteSubCategory(activeTab, sc);
+      }else{
+        activeSubTab = (activeSubTab === sc) ? "" : sc;
+        saveActive(true);
+        renderSubTabs();
+        render();
+      }
+    });
+    subTabsEl.appendChild(b);
+  });
+
+  if(uncatCount > 0){
+    var bOther = document.createElement("button");
+    bOther.type = "button";
+    bOther.className = "subtab" + (activeSubTab === "__NONE__" ? " on" : "");
+    bOther.innerHTML = '<span>未分小类</span><span class="cnt">' + uncatCount + '</span>';
+    bOther.addEventListener("click", function(){
+      activeSubTab = (activeSubTab === "__NONE__") ? "" : "__NONE__";
+      saveActive(true);
+      renderSubTabs();
+      render();
+    });
+    subTabsEl.appendChild(bOther);
+  }
+
+  var totalInCat = resourcesList.filter(function(r){ return r.cat === activeTab; }).length;
+  if(totalInCat > 0 && subs.length > 0){
+    var bAll = document.createElement("button");
+    bAll.type = "button";
+    bAll.className = "subtab" + (activeSubTab === "__ALL__" ? " on" : "");
+    bAll.innerHTML = '<span>全部' + esc(activeTab) + '</span><span class="cnt">' + totalInCat + '</span>';
+    bAll.addEventListener("click", function(){
+      activeSubTab = (activeSubTab === "__ALL__") ? "" : "__ALL__";
+      saveActive(true);
+      renderSubTabs();
+      render();
+    });
+    subTabsEl.appendChild(bAll);
+  }
+
+  var plusSub = document.createElement("button");
+  plusSub.type = "button";
+  plusSub.className = "subtab plus";
+  plusSub.textContent = "＋ 小类";
+  plusSub.addEventListener("click", function(){ openCatAdd("subcat"); });
+  subTabsEl.appendChild(plusSub);
+}
+
+function deleteCategory(name){
+  var resourcesList = currentResources();
+  var count = resourcesList.filter(function(r){ return r.cat === name; }).length;
+  askConfirm("删除分类", "确定删除大分类「" + name + "」吗？其中的 " + count + " 个物质会自动变为“不分类”。", function(){
+    if(currentMode === "team"){
+      teamData.allCats = teamData.allCats.filter(function(c){ return c !== name; });
+      delete teamData.subCatsMap[name];
+    }else{
+      localData.allCats = localData.allCats.filter(function(c){ return c !== name; });
+      delete localData.subCatsMap[name];
+    }
+    resourcesList.forEach(function(r){
+      if(r.cat === name){ r.cat = "自定义"; r.subcat = ""; }
+    });
+    if(activeTab === name){ activeTab = "全部"; activeSubTab = ""; }
+    if(currentCats().length === 0) catManageMode = false;
+    saveActive();
+    renderTabs();
+    render();
+    showToast("已删除分类「" + name + "」");
+  });
+}
+
+function deleteSubCategory(cat, subName){
+  var resourcesList = currentResources();
+  var count = resourcesList.filter(function(r){ return r.cat === cat && r.subcat === subName; }).length;
+  askConfirm("删除小类", "确定删除小类「" + subName + "」吗？里面的 " + count + " 个物质会保留在未分小类中。", function(){
+    var map = currentSubCatsMap();
+    if(Array.isArray(map[cat])){
+      map[cat] = map[cat].filter(function(s){ return s !== subName; });
+    }
+    resourcesList.forEach(function(r){
+      if(r.cat === cat && r.subcat === subName) r.subcat = "";
+    });
+    if(activeSubTab === subName) activeSubTab = "";
+    var st0 = curStore();
+    if(st0.subImgs) delete st0.subImgs[imgKey(cat, subName)];
+    saveActive();
+    renderSubTabs();
+    render();
+    showToast("已删除小类「" + subName + "」");
+  });
+}
+
+function switchTab(name){
+  if(activeTab === name){
+    if(name !== "全部" && activeSubTab !== ""){
+      activeSubTab = "";
+      saveActive(true);
+      renderSubTabs();
+      render();
+    }
+    return;
+  }
+  activeTab = name;
+  activeSubTab = "";
+  closeCatAdd();
+  saveActive(true);
+  renderTabs();
+  render();
+}
+
+function openCatAdd(mode){
+  catAddTarget = (mode === "subcat" && activeTab !== "全部") ? "subcat" : "cat";
+  catManageMode = false;
+  renderTabs();
+  catAdd.hidden = false;
+  if(catAddTarget === "subcat"){
+    catAddLabel.textContent = "在「" + activeTab + "」下新增小类";
+    catName.placeholder = "比如：黑曜石宝箱";
+  }else{
+    catAddLabel.textContent = "新增大分类名称";
+    catName.placeholder = "比如：矿石、精英怪";
+  }
+  catName.value = "";
+  catErr.hidden = true;
+  catName.focus();
+}
+
+function closeCatAdd(){
+  catAdd.hidden = true;
+}
+
+function addCat(){
+  var name = catName.value.trim();
+  if(!name){ catErr.textContent = "先起个名字"; catErr.hidden = false; catName.focus(); return; }
+  if(catAddTarget === "subcat" && activeTab !== "全部"){
+    var subs = subCatsOf(activeTab);
+    if(subs.indexOf(name) >= 0){
+      catErr.textContent = "已经有「" + name + "」小类了";
+      catErr.hidden = false; catName.focus(); return;
+    }
+    var map = currentSubCatsMap();
+    if(!Array.isArray(map[activeTab])) map[activeTab] = [];
+    map[activeTab].push(name);
+    activeSubTab = name;
+    saveActive();
+    renderSubTabs();
+    render();
+    closeCatAdd();
+    showToast("已添加小类「" + name + "」");
+    return;
+  }
+  if(tabsList().indexOf(name) >= 0){
+    catErr.textContent = "已经有「" + name + "」分类了"; catErr.hidden = false; catName.focus(); return;
+  }
+  if(currentMode === "team"){
+    teamData.allCats.push(name);
+    if(!Array.isArray(teamData.subCatsMap[name])) teamData.subCatsMap[name] = [];
+  }else{
+    localData.allCats.push(name);
+    if(!Array.isArray(localData.subCatsMap[name])) localData.subCatsMap[name] = [];
+  }
+  activeTab = name;
+  activeSubTab = "";
+  saveActive();
+  renderTabs();
+  render();
+  closeCatAdd();
+  showToast("已添加大分类「" + name + "」");
+}
+
+$("#catOk").addEventListener("click", addCat);
+$("#catCancel").addEventListener("click", closeCatAdd);
+catName.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){ e.preventDefault(); addCat(); }
+  if(e.key === "Escape") closeCatAdd();
+});
+
+function fillCatSelect(){
+  sCat.innerHTML = "";
+  var none = document.createElement("option");
+  none.value = "自定义";
+  none.textContent = "不分类";
+  sCat.appendChild(none);
+  currentCats().forEach(function(name){
+    var o = document.createElement("option");
+    o.value = name;
+    o.textContent = name;
+    sCat.appendChild(o);
+  });
+  if(activeTab !== "全部" && currentCats().indexOf(activeTab) >= 0){
+    sCat.value = activeTab;
+  }
+  fillSubCatSelect();
+}
+
+function fillSubCatSelect(){
+  var cat = sCat.value;
+  sSubCatSel.innerHTML = "";
+  if(!cat || cat === "自定义"){
+    var o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = "无小类";
+    sSubCatSel.appendChild(o0);
+    sSubCatNew.hidden = true;
+    syncNamePlaceholder();
+    return;
+  }
+  var subs = subCatsOf(cat);
+  subs.forEach(function(sc){
+    var o = document.createElement("option");
+    o.value = sc;
+    o.textContent = sc;
+    sSubCatSel.appendChild(o);
+  });
+  var oNone = document.createElement("option");
+  oNone.value = "";
+  oNone.textContent = "不设小类";
+  sSubCatSel.appendChild(oNone);
+  var oNew = document.createElement("option");
+  oNew.value = "__NEW__";
+  oNew.textContent = "＋ 新建小类...";
+  sSubCatSel.appendChild(oNew);
+
+  if(activeTab === cat && activeSubTab && activeSubTab !== "__ALL__" && activeSubTab !== "__NONE__" && subs.indexOf(activeSubTab) >= 0){
+    sSubCatSel.value = activeSubTab;
+    sSubCatNew.hidden = true;
+  }else if(subs.length > 0){
+    sSubCatSel.value = subs[0];
+    sSubCatNew.hidden = true;
+  }else{
+    sSubCatSel.value = "__NEW__";
+    sSubCatNew.hidden = false;
+  }
+  syncNamePlaceholder();
+}
+
+function syncNamePlaceholder(){
+  var cat = sCat.value;
+  if(cat && cat !== "自定义"){
+    if(sSubCatSel.value === "__NEW__"){
+      var typed = sSubCatNew.value.trim();
+      sName.placeholder = typed ? ("默认使用：" + typed + "（可留空）") : "可留空（默认与上方新建小类同名）";
+    }else if(sSubCatSel.value){
+      sName.placeholder = "默认使用：" + sSubCatSel.value + "（可留空）";
+    }else{
+      sName.placeholder = "请输入物质名称（如：黑曜石宝箱）";
+    }
+  }else{
+    sName.placeholder = "请输入物质名称（如：黑曜石宝箱）";
+  }
+}
+
+sCat.addEventListener("change", fillSubCatSelect);
+sSubCatSel.addEventListener("change", function(){
+  sSubCatNew.hidden = (sSubCatSel.value !== "__NEW__");
+  syncNamePlaceholder();
+  if(!sSubCatNew.hidden) sSubCatNew.focus();
+});
+sSubCatNew.addEventListener("input", syncNamePlaceholder);
+
+var editingTarget = null;
+var editMode = "remain"; // "remain" 或 "got"
+var etTabRemain = $("#etTabRemain"), etTabGot = $("#etTabGot");
+var etPaneRemain = $("#etPaneRemain"), etPaneGot = $("#etPaneGot");
+var gotDay = $("#gotDay"), gotHour = $("#gotHour"), gotMin = $("#gotMin"), etGotPreview = $("#etGotPreview");
+
+function switchEditTab(mode){
+  editMode = (mode === "got") ? "got" : "remain";
+  etTabRemain.className = "et-tab" + (editMode === "remain" ? " on" : "");
+  etTabGot.className = "et-tab" + (editMode === "got" ? " on" : "");
+  etPaneRemain.hidden = (editMode !== "remain");
+  etPaneGot.hidden = (editMode !== "got");
+  if(editMode === "got") updateGotPreview();
+}
+etTabRemain.addEventListener("click", function(){ switchEditTab("remain"); });
+etTabGot.addEventListener("click", function(){ switchEditTab("got"); });
+
+function setGotInputsFromTs(ts){
+  var d = new Date(ts);
+  var diff = dayDiff(ts);
+  gotDay.value = (diff <= -1) ? "-1" : "0";
+  gotHour.value = d.getHours();
+  gotMin.value = d.getMinutes();
+  updateGotPreview();
+}
+
+function getGotTimestamp(){
+  var now = new Date();
+  var dayOffset = parseInt(gotDay.value, 10) || 0;
+  var h = Math.min(23, Math.max(0, parseInt(gotHour.value, 10) || 0));
+  var m = Math.min(59, Math.max(0, parseInt(gotMin.value, 10) || 0));
+  var target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayOffset, h, m, 0, 0);
+  return target.getTime();
+}
+
+function updateGotPreview(){
+  if(!editingTarget) return;
+  var res = byId(editingTarget.rid);
+  if(!res) return;
+  var gotTs = getGotTimestamp();
+  var b = bounds(res);
+  var winStartTs = gotTs + b[0] * 60000;
+  var endTs = gotTs + b[1] * 60000;
+  var now = Date.now();
+  var note = gotTs > now ? '<span style="color:var(--alert)">⚠️ 晚于当前时间，请确认日期</span><br>' : "";
+  if(b[1] > b[0]){
+    etGotPreview.innerHTML = note + "下次刷新窗：<b>" + fmtWhen(winStartTs) + " ~ " + fmtHM(endTs) + "</b>";
+  }else{
+    etGotPreview.innerHTML = note + "下次刷新：<b>" + fmtWhen(endTs) + "</b>";
+  }
+}
+
+[gotDay, gotHour, gotMin].forEach(function(el){
+  el.addEventListener("input", updateGotPreview);
+  el.addEventListener("change", updateGotPreview);
+});
+
+$("#etGotChips").querySelectorAll(".chip").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var agoMins = parseInt(btn.dataset.ago, 10) || 0;
+    setGotInputsFromTs(Date.now() - agoMins * 60000);
+  });
+});
+
+function openEditTimeModal(rid, isleIdx){
+  var res = byId(rid);
+  if(!res) return;
+  editingTarget = {rid: rid, isle: isleIdx};
+  var now = Date.now();
+  var eff = effectiveStart(res, isleIdx, now);
+
+  $("#editTimeTitle").textContent = res.name + " · " + (isleIdx + 1) + "岛 修改时间";
+  var remSec = 0;
+  if(eff && eff.end > now){
+    remSec = Math.ceil((eff.end - now) / 1000);
+  }else{
+    var b = bounds(res);
+    remSec = b[0] * 60;
+  }
+  setModalHmsFromSeconds(remSec);
+
+  var baseGotTs = (res.starts && res.starts[isleIdx]) ? res.starts[isleIdx] : now;
+  setGotInputsFromTs(baseGotTs);
+
+  switchEditTab(editMode);
+  $("#editTimeModal").hidden = false;
+  if(editMode === "remain"){
+    $("#etMin").focus();
+    $("#etMin").select();
+  }else{
+    gotHour.focus();
+    gotHour.select();
+  }
+}
+
+function setModalHmsFromSeconds(totalSec){
+  totalSec = Math.max(0, Math.round(totalSec));
+  var h = Math.floor(totalSec / 3600);
+  var m = Math.floor((totalSec % 3600) / 60);
+  var s = totalSec % 60;
+  $("#etHour").value = h;
+  $("#etMin").value = m;
+  $("#etSec").value = s;
+}
+
+function getModalSeconds(){
+  var h = Math.max(0, parseInt($("#etHour").value, 10) || 0);
+  var m = Math.max(0, parseInt($("#etMin").value, 10) || 0);
+  var s = Math.max(0, parseInt($("#etSec").value, 10) || 0);
+  return h * 3600 + m * 60 + s;
+}
+
+$("#etRemainChips").querySelectorAll(".chip").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    if(btn.dataset.adj !== undefined){
+      var delta = parseInt(btn.dataset.adj, 10);
+      setModalHmsFromSeconds(getModalSeconds() + delta);
+    }else if(btn.dataset.set !== undefined){
+      setModalHmsFromSeconds(parseInt(btn.dataset.set, 10));
+    }
+  });
+});
+
+function saveEditedTime(){
+  if(!editingTarget) return;
+  var res = byId(editingTarget.rid);
+  var i = editingTarget.isle;
+  if(!res) return;
+
+  var now = Date.now();
+  var key = res.id + ":" + i;
+  if(!Array.isArray(res.customEnd)) res.customEnd = new Array(ISLES).fill(null);
+
+  if(editMode === "got"){
+    var gotTs = getGotTimestamp();
+    res.starts[i] = gotTs;
+    res.customEnd[i] = null;
+    var eff = effectiveStart(res, i, now);
+    rowState[key] = eff ? isleStateAt(eff, now) : "run";
+    lastRound[key] = eff ? eff.round : 0;
+    delete loopCache[key];
+    delete recentLoopAt[key];
+    showToast("已按获取时间 " + fmtShortClock(gotTs) + " 自动算出下次刷新");
+  }else{
+    var totalSec = getModalSeconds();
+    var targetEnd = now + totalSec * 1000;
+    res.starts[i] = now;
+    res.customEnd[i] = targetEnd;
+    rowState[key] = totalSec > 0 ? "run" : "due";
+    lastRound[key] = 0;
+    delete loopCache[key];
+    delete recentLoopAt[key];
+    showToast("已更新 " + res.name + " " + (i + 1) + "岛 剩余时间");
+  }
+
+  $("#editTimeModal").hidden = true;
+  editingTarget = null;
+  saveActive();
+  render();
+  unlockAudio();
+}
+
+$("#etSaveBtn").addEventListener("click", saveEditedTime);
+$("#etCancelBtn").addEventListener("click", function(){
+  $("#editTimeModal").hidden = true;
+  editingTarget = null;
+});
+
+function nearestKey(res, now){
+  var best = Infinity;
+  for(var i = 0; i < ISLES; i++){
+    var eff = effectiveStart(res, i, now);
+    if(!eff) continue;
+    var st = isleStateAt(eff, now);
+    var k = (st === "due") ? (eff.end - now - 1e9)
+          : (st === "win") ? (eff.end - now - 5e8)
+          : (eff.winStart - now);
+    if(k < best) best = k;
+  }
+  return best;
+}
+
+function needPickSubCatFirst(){
+  if(activeTab === "全部") return false;
+  var subs = subCatsOf(activeTab);
+  return subs.length > 0 && !activeSubTab;
+}
+
+function visibleSorted(){
+  if(needPickSubCatFirst()) return [];
+  var now = Date.now();
+  var arr = currentResources().filter(function(r){
+    if(activeTab === "全部") return true;
+    if(r.cat !== activeTab) return false;
+    if(!activeSubTab || activeSubTab === "__ALL__") return true;
+    if(activeSubTab === "__NONE__") return !r.subcat;
+    return r.subcat === activeSubTab;
+  });
+  arr.sort(function(a, b){
+    var ka = nearestKey(a, now), kb = nearestKey(b, now);
+    return ka === kb ? 0 : (ka < kb ? -1 : 1);
+  });
+  return arr;
+}
+
+function syncOrder(){
+  var vis = visibleSorted();
+  var lis = listEl.children;
+  if(lis.length !== vis.length) return;
+  var same = true, i;
+  for(i = 0; i < lis.length; i++){
+    if(lis[i].dataset.rid !== vis[i].id){ same = false; break; }
+  }
+  if(same) return;
+  var map = {};
+  for(i = 0; i < lis.length; i++) map[lis[i].dataset.rid] = lis[i];
+  for(i = 0; i < vis.length; i++){
+    if(map[vis[i].id]) listEl.appendChild(map[vis[i].id]);
+  }
+}
+
+function buildIsle(res, i){
+  var row = document.createElement("div");
+  row.className = "isle-row";
+  row.dataset.rid = res.id;
+  row.dataset.isle = i;
+  var looping = effLoop(res, i);
+  row.innerHTML =
+    '<span class="isle-name">' + (i + 1) + '岛</span>' +
+    '<span class="isle-phase"></span>' +
+    '<span class="clock" title="点击修改时间">--:--</span>' +
+    '<span class="next"></span>' +
+    '<span class="rec-at"></span>' +
+    '<div class="isle-btns">' +
+      '<button class="btn rec" type="button">记录</button>' +
+      '<button class="btn edit-t" type="button">改时</button>' +
+      '<button class="btn lp' + (looping ? ' on' : '') + '" type="button" aria-pressed="' + (looping ? 'true' : 'false') + '">' +
+        (looping ? '循环' : '单次') + '</button>' +
+      '<button class="btn del clear" type="button" aria-label="清空">×</button>' +
+    '</div>' +
+    '<div class="bar"><span class="win-mark" hidden></span><i></i></div>';
+
+  row.querySelector(".lp").addEventListener("click", function(){ toggleIsleLoop(res.id, i); });
+  row.querySelector(".rec").addEventListener("click", function(){ record(res.id, i); });
+  row.querySelector(".edit-t").addEventListener("click", function(){ openEditTimeModal(res.id, i); });
+  row.querySelector(".clock").addEventListener("click", function(){ openEditTimeModal(res.id, i); });
+  row.querySelector(".clear").addEventListener("click", function(){ clearIsle(res.id, i); });
+  return row;
+}
+
+function buildRes(res){
+  var li = document.createElement("li");
+  li.className = "res" + (res.open ? " open" : "");
+  li.dataset.rid = res.id;
+  var trunk = document.createElement("div");
+  trunk.className = "trunk";
+  trunk.dataset.rid = res.id;
+  trunk.setAttribute("role", "button");
+  trunk.tabIndex = 0;
+  trunk.setAttribute("aria-expanded", String(res.open));
+  var catTag = "";
+  if(res.cat && res.cat !== "自定义"){
+    catTag = '<span class="cat">' + esc(res.cat + (res.subcat ? " · " + res.subcat : "")) + '</span>';
+  }
+  trunk.innerHTML =
+    '<span class="caret" aria-hidden="true">▸</span>' +
+    '<span class="res-name" title="' + esc(res.name) + '">' + esc(res.name) + '</span>' +
+    catTag +
+    '<span class="per">' + labelOf(res) + '</span>' +
+    '<span class="summary"></span>' +
+    '<button class="btn del" type="button" aria-label="删除">×</button>';
+  trunk.addEventListener("click", function(e){
+    if(e.target.closest("button")) return;
+    toggleRes(res.id);
+  });
+  trunk.querySelector(".del").addEventListener("click", function(){ delRes(res.id); });
+  li.appendChild(trunk);
+  if(res.open){
+    var wrap = document.createElement("div");
+    wrap.className = "branches";
+    for(var i = 0; i < ISLES; i++) wrap.appendChild(buildIsle(res, i));
+    li.appendChild(wrap);
+  }
+  return li;
+}
+
+function fmtCN(ms){
+  var m = Math.max(0, Math.ceil(ms / 60000));
+  var h = Math.floor(m / 60), mm = m % 60;
+  return h > 0 ? h + "时" + mm + "分" : mm + "分";
+}
+
+function subSummary(sc, now){
+  var items = currentResources().filter(function(r){ return r.cat === activeTab && r.subcat === sc; });
+  var e0 = null, l0 = null, best = null, dueCnt = 0, firstDue = -1;
+  items.forEach(function(res){
+    var b = bounds(res);
+    e0 = (e0 === null) ? b[0] : Math.min(e0, b[0]);
+    l0 = (l0 === null) ? b[1] : Math.max(l0, b[1]);
+    for(var i = 0; i < ISLES; i++){
+      var eff = effectiveStart(res, i, now);
+      if(!eff) continue;
+      var st = isleStateAt(eff, now);
+      if(st === "run"){
+        var rem = (eff.hasWin ? eff.winStart : eff.end) - now;
+        if(!best || (best.mode !== "inWin" && rem < best.rem)) best = {isle: i, rem: rem, mode: "toWin"};
+      }else if(st === "win"){
+        var remE = eff.end - now;
+        if(!best || best.mode !== "inWin" || remE < best.rem) best = {isle: i, rem: remE, mode: "inWin"};
+      }else if(st === "due"){
+        dueCnt++;
+        if(firstDue < 0) firstDue = i;
+      }
+    }
+  });
+  var range = items.length ? (e0 < l0 ? fmtMins(e0) + "~" + fmtMins(l0) : fmtMins(l0)) : "暂无物质";
+  var stat = "未记录", color = "var(--dim)", isle = items.length + " 项";
+  if(best){
+    color = "var(--amber)";
+    stat = (best.mode === "inWin") ? ("已刷新 ⌛ " + fmtCN(best.rem) + "后结束") : ("⌛ " + fmtCN(best.rem));
+    isle = "岛屿 " + (best.isle + 1);
+  }else if(dueCnt > 0){
+    color = "var(--alert)";
+    stat = dueCnt > 1 ? (dueCnt + " 岛到点") : "已到点";
+    isle = "岛屿 " + (firstDue + 1);
+  }
+  return {range: range, stat: stat, color: color, isle: isle};
+}
+
+function patchSubCards(){
+  var now = Date.now();
+  subGuideEl.querySelectorAll(".sub-card").forEach(function(card){
+    var sm = subSummary(card.getAttribute("data-sub"), now);
+    var st = card.querySelector(".sc-stat"), is = card.querySelector(".sc-isle"), rg = card.querySelector(".sc-range");
+    if(st){ st.textContent = sm.stat; st.style.color = sm.color; }
+    if(is) is.textContent = sm.isle;
+    if(rg) rg.textContent = sm.range;
+  });
+}
+
+function packImg(key, d){
+  return btoa(unescape(encodeURIComponent(JSON.stringify({v: 3, s: clientId, img: {k: key, d: d}}))));
+}
+
+function sendSubImg(code, key, d){
+  var packed = packImg(key, d);
+  if(packed.length > 4000) return;
+  var c = conns[code];
+  if(c && c.bc){ try{ c.bc.postMessage(packed); }catch(e){} }
+  fetch("https://ntfy.sh/" + topicForRoom(code), { method: "POST", body: packed }).catch(function(){});
+}
+
+function pushAllImages(){
+  if(!activeSquad) return;
+  var code = activeSquad, imgs = teamData.subImgs || {};
+  Object.keys(imgs).forEach(function(k, idx){
+    setTimeout(function(){ sendSubImg(code, k, imgs[k]); }, 300 * (idx + 1));
+  });
+}
+
+function compressSquare(im, key){
+  var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+  var side = Math.min(w, h), sx = (w - side) / 2, sy = (h - side) / 2;
+  var sizes = [96, 80, 64, 48], qs = [0.75, 0.55, 0.4, 0.3], d = "";
+  for(var a = 0; a < sizes.length; a++){
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = sizes[a];
+    var cx = cv.getContext("2d");
+    cx.fillStyle = "#fff";
+    cx.fillRect(0, 0, sizes[a], sizes[a]);
+    cx.drawImage(im, sx, sy, side, side, 0, 0, sizes[a], sizes[a]);
+    for(var b = 0; b < qs.length; b++){
+      d = cv.toDataURL("image/jpeg", qs[b]);
+      if(packImg(key, d).length <= 3800) return d;
+    }
+  }
+  return d;
+}
+
+var imgPicker = null;
+function pickSubImage(cat, sub){
+  if(!imgPicker){
+    imgPicker = document.createElement("input");
+    imgPicker.type = "file";
+    imgPicker.accept = "image/*";
+    imgPicker.style.display = "none";
+    document.body.appendChild(imgPicker);
+    imgPicker.addEventListener("change", function(){
+      var file = imgPicker.files && imgPicker.files[0];
+      if(!file) return;
+      var pc = imgPicker._cat, ps = imgPicker._sub;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var im = new Image();
+        im.onload = function(){
+          var key = imgKey(pc, ps);
+          var d = compressSquare(im, key);
+          if(!d){ showToast("图片处理失败"); return; }
+          var store = curStore();
+          if(!store.subImgs) store.subImgs = {};
+          store.subImgs[key] = d;
+          saveActive(true);
+          if(currentMode === "team" && activeSquad) sendSubImg(activeSquad, key, d);
+          if(!subGuideEl.hidden) renderSubGuide();
+          showToast("已更换图片" + ((currentMode === "team" && activeSquad) ? "，已同步给小队" : ""));
+        };
+        im.onerror = function(){ showToast("图片读取失败"); };
+        im.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  imgPicker._cat = cat;
+  imgPicker._sub = sub;
+  imgPicker.value = "";
+  imgPicker.click();
+}
+
+function renderSubGuide(){
+  if(!needPickSubCatFirst()){
+    subGuideEl.hidden = true;
+    subGuideEl.innerHTML = "";
+    return;
+  }
+  subGuideEl.hidden = false;
+  var subs = subCatsOf(activeTab);
+  var now = Date.now();
+  var imgs = curStore().subImgs || {};
+  var html = '<p class="sub-guide-title">选择「<b>' + esc(activeTab) + '</b>」小类</p><div class="sub-cards">';
+
+  subs.forEach(function(sc){
+    var sm = subSummary(sc, now);
+    var im = imgs[imgKey(activeTab, sc)];
+    var imgHtml = im ? '<img src="' + esc(im) + '" alt="">' : '<span>' + esc(sc.charAt(0)) + '</span>';
+    html +=
+      '<div class="sub-card" data-sub="' + esc(sc) + '">' +
+        '<button class="sc-x" type="button" data-act="del" title="删除小类">×</button>' +
+        '<div class="sc-img" data-act="img" title="点击更换图片">' + imgHtml + '</div>' +
+        '<div class="sc-name">' + esc(sc) + '</div>' +
+        '<div class="sc-range">' + esc(sm.range) + '</div>' +
+        '<div class="sc-stat" style="color:' + sm.color + '">' + esc(sm.stat) + '</div>' +
+        '<div class="sc-isle">' + esc(sm.isle) + '</div>' +
+        '<button class="sc-add" type="button" data-act="add" title="添加物质">+</button>' +
+      '</div>';
+  });
+  html += '</div>';
+  subGuideEl.innerHTML = html;
+  subGuideEl.querySelectorAll(".sub-card").forEach(function(card){
+    card.addEventListener("click", function(ev){
+      var actEl = ev.target.closest ? ev.target.closest("[data-act]") : null;
+      var act = actEl ? actEl.getAttribute("data-act") : "";
+      var sc = card.getAttribute("data-sub");
+      if(act === "del"){ deleteSubCategory(activeTab, sc); return; }
+      if(act === "add"){
+        openSheet();
+        sSubCatSel.value = sc;
+        sSubCatNew.hidden = true;
+        syncNamePlaceholder();
+        return;
+      }
+      if(act === "img"){ pickSubImage(activeTab, sc); return; }
+      activeSubTab = sc;
+      saveActive(true);
+      renderSubTabs();
+      render();
+    });
+  });
+}
+
+function render(){
+  listEl.innerHTML = "";
+  renderSubGuide();
+  if(typeof syncQuickFloat === "function") syncQuickFloat();
+  if(needPickSubCatFirst()){
+    emptyEl.hidden = true;
+    bannerText = "";
+    tick();
+    return;
+  }
+  var resourcesList = currentResources();
+  var vis = visibleSorted();
+  for(var i = 0; i < vis.length; i++) listEl.appendChild(buildRes(vis[i]));
+  if(resourcesList.length === 0){
+    emptyEl.hidden = false;
+    emptyEl.textContent = "暂无物质，点击右上角「＋ 添加」";
+  }else if(vis.length === 0){
+    emptyEl.hidden = false;
+    emptyEl.textContent = "当前分类暂无物质";
+  }else{
+    emptyEl.hidden = true;
+  }
+  bannerText = "";
+  tick();
+}
+
+var pendingSmartAction = null;
+
+function cnNumToInt(str){
+  if(!str) return 0;
+  var map = {"零":0,"一":1,"二":2,"两":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,"九":9,"十":10};
+  if(/^\d+$/.test(str)) return parseInt(str, 10);
+  if(str === "半") return 0.5;
+  if(str.length === 1 && map[str] !== undefined) return map[str];
+  if(str.indexOf("十") >= 0){
+    var parts = str.split("十");
+    var tens = parts[0] ? (map[parts[0]] || 1) : 1;
+    var ones = parts[1] ? (map[parts[1]] || 0) : 0;
+    return tens * 10 + ones;
+  }
+  return 0;
+}
+
+function parseSmartCommand(rawText){
+  var text = (rawText || "").trim();
+  if(!text) return { err: "请输入内容，如：黑曜石宝箱 1岛 刚刚" };
+
+  var now = Date.now();
+  var isleIdx = qfSelectedIsle || 0;
+  var isleSpecified = false;
+
+  var isleMatch = text.match(/(10|[1-9]|十|[一二三四五六七八九])\s*[号]?岛/);
+  if(isleMatch){
+    var n = cnNumToInt(isleMatch[1]);
+    if(n >= 1 && n <= ISLES){
+      isleIdx = n - 1;
+      isleSpecified = true;
+    }
+    text = text.replace(isleMatch[0], " ");
+  }
+
+  var mode = "got";
+  var gotTs = now;
+  var remSec = 0;
+  var timeDesc = "刚刚捡到";
+
+  var remMatch = text.match(/(?:剩|剩余|还有)\s*(?:(\d+|[一二两三四五六七八九十半]+)\s*(?:小时|时|h))?\s*(?:(\d+|[一二两三四五六七八九十]+)\s*(?:分钟|分|m))?/i);
+  var clockMatch = text.match(/(\d{1,2})\s*[:：点时]\s*(\d{1,2})\s*分?(?:\s*捡到?)?/);
+  var agoHourMinMatch = text.match(/(?:前|过去)?\s*(\d+|[一二两三四五六七八九十半]+)\s*(?:小时|时|h)\s*(\d+|[一二两三四五六七八九十]+)?\s*(?:分钟|分)?(?:前|捡|刷)?/i);
+  var agoMinMatch = text.match(/(?:前\s*(\d+|[一二两三四五六七八九十半]+)\s*(?:分钟|分)|(\d+|[一二两三四五六七八九十半]+)\s*(?:分钟|分)\s*前)/);
+  var justNowMatch = text.match(/刚刚|刚才|刚捡|现在|才捡/);
+
+  if(remMatch && (remMatch[1] || remMatch[2])){
+    mode = "rem";
+    var rh = remMatch[1] ? cnNumToInt(remMatch[1]) : 0;
+    var rm = remMatch[2] ? cnNumToInt(remMatch[2]) : 0;
+    remSec = Math.round(rh * 3600 + rm * 60);
+    timeDesc = "设剩余时间 " + fmtMins(Math.round(remSec / 60));
+    text = text.replace(remMatch[0], " ");
+  }else if(clockMatch){
+    var ch = Math.min(23, Math.max(0, parseInt(clockMatch[1], 10) || 0));
+    var cm = Math.min(59, Math.max(0, parseInt(clockMatch[2], 10) || 0));
+    var dNow = new Date(now);
+    var target = new Date(dNow.getFullYear(), dNow.getMonth(), dNow.getDate(), ch, cm, 0, 0).getTime();
+    if(target > now + 60000) target -= 86400000;
+    gotTs = target;
+    timeDesc = fmtShortClock(gotTs) + " 捡到";
+    text = text.replace(clockMatch[0], " ");
+  }else if(agoMinMatch){
+    var mStr = agoMinMatch[1] || agoMinMatch[2];
+    var mins = (mStr === "半") ? 0.5 : cnNumToInt(mStr);
+    gotTs = now - Math.round(mins * 60000);
+    timeDesc = mins + "分钟前捡到 (" + fmtHM(gotTs) + ")";
+    text = text.replace(agoMinMatch[0], " ");
+  }else if(agoHourMinMatch){
+    var ah = agoHourMinMatch[1] ? cnNumToInt(agoHourMinMatch[1]) : 0;
+    var am = agoHourMinMatch[2] ? cnNumToInt(agoHourMinMatch[2]) : 0;
+    var totalAgoM = Math.round(ah * 60 + am);
+    gotTs = now - totalAgoM * 60000;
+    timeDesc = fmtMins(totalAgoM) + "前捡到 (" + fmtHM(gotTs) + ")";
+    text = text.replace(agoHourMinMatch[0], " ");
+  }else if(justNowMatch){
+    gotTs = now;
+    timeDesc = "刚刚捡到 (" + fmtHM(gotTs) + ")";
+    text = text.replace(justNowMatch[0], " ");
+  }else{
+    gotTs = now;
+    timeDesc = "刚刚捡到 (" + fmtHM(gotTs) + ")";
+  }
+
+  var keyword = text.replace(/捡到|捡了|刷了|刷新|记录|录入|的|在|了|，|。|,|\s+/g, "").trim();
+
+  var list = currentResources();
+  var matchedRes = null;
+  var bestScore = 0;
+
+  if(keyword){
+    list.forEach(function(r){
+      var cand = r.name || "";
+      var sub = r.subcat || "";
+      var score = 0;
+      if(cand === keyword || sub === keyword) score = 100;
+      else if(cand.indexOf(keyword) >= 0 || keyword.indexOf(cand) >= 0) score = 80;
+      else if(sub && (sub.indexOf(keyword) >= 0 || keyword.indexOf(sub) >= 0)) score = 75;
+      else{
+        var hit = 0;
+        for(var c = 0; c < keyword.length; c++){
+          if(cand.indexOf(keyword[c]) >= 0) hit++;
+        }
+        if(hit >= 2) score = Math.round((hit / Math.max(cand.length, keyword.length)) * 60);
+      }
+      if(score > bestScore){
+        bestScore = score;
+        matchedRes = r;
+      }
+    });
+  }else if(qfSelectedResId){
+    matchedRes = byId(qfSelectedResId);
+  }else if(list.length > 0){
+    matchedRes = list[0];
+  }
+
+  var willCreateNew = false;
+  var newCat = "自定义", newSub = "";
+  if(!matchedRes){
+    if(!keyword){
+      return { err: "未识别到物品名称，请如：黑曜石宝箱 刚刚" };
+    }
+    var map = currentSubCatsMap();
+    for(var catKey in map){
+      var subs = map[catKey] || [];
+      for(var j = 0; j < subs.length; j++){
+        if(subs[j] === keyword || subs[j].indexOf(keyword) >= 0 || keyword.indexOf(subs[j]) >= 0){
+          newCat = catKey;
+          newSub = subs[j];
+          keyword = subs[j];
+          break;
+        }
+      }
+      if(newSub) break;
+    }
+    willCreateNew = true;
+  }
+
+  return {
+    res: matchedRes,
+    willCreateNew: willCreateNew,
+    newName: keyword,
+    newCat: newCat,
+    newSub: newSub,
+    isle: isleIdx,
+    isleSpecified: isleSpecified,
+    mode: mode,
+    gotTs: gotTs,
+    remSec: remSec,
+    timeDesc: timeDesc
+  };
+}
+
+function renderSmartConfirmModal(){
+  if(!pendingSmartAction) return;
+  var p = pendingSmartAction;
+  var dispName = p.res
+    ? (p.res.name + (p.res.cat && p.res.cat !== "自定义" ? " (" + p.res.cat + ")" : ""))
+    : (p.newName + " [新添2~6h物质]");
+  $("#scResName").textContent = dispName;
+  $("#scTimeDesc").textContent = p.timeDesc;
+
+  var b = p.res ? bounds(p.res) : [120, 360];
+  if(p.mode === "rem"){
+    var endTs = Date.now() + p.remSec * 1000;
+    $("#scNextDesc").textContent = fmtWhen(endTs) + " 到点";
+  }else{
+    var winStart = p.gotTs + b[0] * 60000;
+    var winEnd = p.gotTs + b[1] * 60000;
+    $("#scNextDesc").textContent = (b[1] > b[0])
+      ? (fmtWhen(winStart) + " ~ " + fmtHM(winEnd))
+      : fmtWhen(winEnd);
+  }
+
+  var grid = $("#scIslesGrid");
+  grid.innerHTML = "";
+  for(var i = 0; i < ISLES; i++){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "parse-isle" + (i === p.isle ? " on" : "");
+    btn.textContent = (i + 1) + "岛";
+    (function(idx){
+      btn.addEventListener("click", function(){
+        pendingSmartAction.isle = idx;
+        renderSmartConfirmModal();
+      });
+    })(i);
+    grid.appendChild(btn);
+  }
+}
+
+function triggerSmartInput(inputEl){
+  var resObj = parseSmartCommand(inputEl.value);
+  if(resObj.err){
+    showToast(resObj.err);
+    inputEl.focus();
+    return;
+  }
+  pendingSmartAction = resObj;
+  pendingSmartAction.sourceInput = inputEl;
+  renderSmartConfirmModal();
+  $("#smartConfirmModal").hidden = false;
+}
+
+$("#scOkBtn").addEventListener("click", function(){
+  if(!pendingSmartAction) return;
+  var p = pendingSmartAction;
+  var targetRes = p.res;
+  if(!targetRes && p.willCreateNew){
+    targetRes = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: p.newName,
+      cat: p.newCat,
+      subcat: p.newSub,
+      kind: "range",
+      base: 360,
+      early: 120,
+      late: 360,
+      open: true,
+      loop: false,
+      loops: new Array(ISLES).fill(null),
+      starts: new Array(ISLES).fill(null),
+      customEnd: new Array(ISLES).fill(null)
+    };
+    currentResources().unshift(targetRes);
+  }
+  var i = p.isle;
+  var key = targetRes.id + ":" + i;
+  var now = Date.now();
+  if(!Array.isArray(targetRes.customEnd)) targetRes.customEnd = new Array(ISLES).fill(null);
+
+  if(p.mode === "rem"){
+    targetRes.starts[i] = now;
+    targetRes.customEnd[i] = now + p.remSec * 1000;
+    rowState[key] = p.remSec > 0 ? "run" : "due";
+    lastRound[key] = 0;
+  }else{
+    targetRes.starts[i] = p.gotTs;
+    targetRes.customEnd[i] = null;
+    var eff = effectiveStart(targetRes, i, now);
+    rowState[key] = eff ? isleStateAt(eff, now) : "run";
+    lastRound[key] = eff ? eff.round : 0;
+  }
+  targetRes.open = true;
+  if(activeTab !== "全部" && targetRes.cat === activeTab && targetRes.subcat){
+    activeSubTab = targetRes.subcat;
+  }
+  qfSelectedResId = targetRes.id;
+  qfSelectedIsle = i;
+  delete loopCache[key];
+  delete recentLoopAt[key];
+
+  if(p.sourceInput) p.sourceInput.value = "";
+  $("#smartConfirmModal").hidden = true;
+  pendingSmartAction = null;
+
+  saveActive();
+  renderTabs();
+  render();
+  unlockAudio();
+  showToast("✓ 已更新 " + targetRes.name + " · " + (i + 1) + "岛");
+});
+
+$("#scCancelBtn").addEventListener("click", function(){
+  $("#smartConfirmModal").hidden = true;
+  pendingSmartAction = null;
+  showToast("已取消修改");
+});
+
+$("#topSmartBtn").addEventListener("click", function(){
+  triggerSmartInput($("#topSmartInp"));
+});
+$("#topSmartInp").addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    e.preventDefault();
+    triggerSmartInput($("#topSmartInp"));
+  }
+});
+
+function byId(id){
+  var list = currentResources();
+  for(var i = 0; i < list.length; i++) if(list[i].id === id) return list[i];
+  return null;
+}
+
+function toggleRes(id){
+  var res = byId(id); if(!res) return;
+  res.open = !res.open;
+  saveActive(true); render();
+}
+
+function record(id, i){
+  var res = byId(id); if(!res) return;
+  var key = id + ":" + i;
+  res.starts[i] = Date.now();
+  if(Array.isArray(res.customEnd)) res.customEnd[i] = null;
+  rowState[key] = "run";
+  lastRound[key] = 0;
+  delete recentLoopAt[key];
+  saveActive(); render();
+  unlockAudio();
+}
+
+function toggleIsleLoop(id, i){
+  var res = byId(id); if(!res) return;
+  if(effLoop(res, i)){
+    var eff = effectiveStart(res, i, Date.now());
+    if(eff && eff.round > 0){
+      res.starts[i] = eff.start;
+      if(Array.isArray(res.customEnd)) res.customEnd[i] = null;
+    }
+    res.loops[i] = false;
+  }else{
+    res.loops[i] = true;
+  }
+  loopCache = {}; lastRound = {}; recentLoopAt = {};
+  saveActive(); render();
+}
+
+function clearIsle(id, i){
+  var res = byId(id); if(!res) return;
+  askConfirm("清空岛计时", "确定清空「" + res.name + " · " + (i + 1) + "岛」的计时吗？", function(){
+    var key = id + ":" + i;
+    res.starts[i] = null;
+    if(Array.isArray(res.customEnd)) res.customEnd[i] = null;
+    delete rowState[key];
+    delete loopCache[key];
+    delete lastRound[key];
+    delete recentLoopAt[key];
+    saveActive(); render();
+  });
+}
+
+function dropKeys(prefix){
+  [rowState, loopCache, lastRound, recentLoopAt].forEach(function(m){
+    for(var k in m) if(k.indexOf(prefix) === 0) delete m[k];
+  });
+}
+
+function delRes(id){
+  var res = byId(id); if(!res) return;
+  askConfirm("删除物质", "确定删除「" + res.name + "」及它所有岛的记录吗？", function(){
+    if(currentMode === "team"){
+      teamData.resources = teamData.resources.filter(function(r){ return r.id !== id; });
+    }else{
+      localData.resources = localData.resources.filter(function(r){ return r.id !== id; });
+    }
+    dropKeys(id + ":");
+    saveActive(); render();
+  });
+}
+
+var lastTickAt = Date.now();
+function tick(){
+  var now = Date.now();
+  var gap = now - lastTickAt;
+  lastTickAt = now;
+  var dueAll = [], winAll = [], loopAll = [];
+  var alerts = [];
+  var needExpand = [];
+  var resourcesList = currentResources();
+
+  for(var r = 0; r < resourcesList.length; r++){
+    var res = resourcesList[r];
+    var dueIsles = [], winIsles = [], recorded = 0, best = null;
+    for(var i = 0; i < ISLES; i++){
+      var key = res.id + ":" + i;
+      var looping = effLoop(res, i);
+      var eff = effectiveStart(res, i, now);
+      var st = eff ? isleStateAt(eff, now) : "idle";
+      var prev = rowState[key];
+      var label = res.name + "·" + (i + 1) + "岛";
+      var at = eff ? eff.end : 0;
+      if(st !== "idle") recorded++;
+      if(st === "run"){
+        var remToWin = (eff.hasWin ? eff.winStart : eff.end) - now;
+        if(!best || remToWin < best.rem) best = {isle: i, rem: remToWin, mode: eff.hasWin ? "toWin" : "toEnd"};
+      }else if(st === "win"){
+        winIsles.push(i);
+        winAll.push(label);
+        var remEnd = at - now;
+        if(!best || best.mode !== "inWin" || remEnd < best.rem){
+          best = {isle: i, rem: remEnd, mode: "inWin"};
+        }
+      }else if(st === "due"){
+        dueIsles.push(i);
+        dueAll.push(label);
+      }
+
+      if(booted && eff){
+        var wBase = key + ":" + eff.start;
+        if(st === "run"){
+          var remW = (eff.hasWin ? eff.winStart : eff.end) - now;
+          if(remW > 0 && remW <= 300000 && !warned[wBase + ":a"]){
+            warned[wBase + ":a"] = 1;
+            alerts.push(["还剩5分钟：" + label, eff.hasWin ? "5分钟后进入刷新时段，准备好！" : "5分钟后倒计时结束，准备好！"]);
+          }
+        }else if(st === "win"){
+          var remE = eff.end - now;
+          if(remE > 0 && remE <= 300000 && !warned[wBase + ":b"]){
+            warned[wBase + ":b"] = 1;
+            alerts.push(["还剩5分钟：" + label, "5分钟后到保底必刷时间！"]);
+          }
+        }
+      }
+      if(booted && prev && prev !== st && st === "win"){
+        alerts.push(["进入刷新时段：" + label, "已进入刷新窗口，随时可能刷出！"]);
+      }
+      if(booted && prev && prev !== st && st === "due"){
+        alerts.push(["保底必刷到点：" + label, "已满最大刷新时间，去游戏里确认一下"]);
+        if(!res.open) needExpand.push(res.id);
+      }
+      var lr = lastRound[key];
+      if(booted && looping && eff && lr !== undefined && eff.round > lr){
+        recentLoopAt[key] = now;
+        alerts.push(["循环自动记：" + label, "这轮到点，已自动记上、开始下一轮"]);
+        if(!res.open) needExpand.push(res.id);
+      }
+      if(eff) lastRound[key] = eff.round; else delete lastRound[key];
+      if(recentLoopAt[key] !== undefined && now - recentLoopAt[key] > 120000) delete recentLoopAt[key];
+      if(recentLoopAt[key] !== undefined) loopAll.push(label);
+      rowState[key] = st;
+      var row = listEl.querySelector('.isle-row[data-rid="' + res.id + '"][data-isle="' + i + '"]');
+      if(row) patchIsle(row, res, i, st, now, eff);
+    }
+    var trunk = listEl.querySelector('.trunk[data-rid="' + res.id + '"]');
+    if(trunk) patchTrunk(trunk, res, dueIsles, winIsles, recorded, best);
+  }
+  syncOrder();
+  if(alerts.length){
+    beep(); lastBeepAt = now;
+    for(var a = 0; a < alerts.length; a++) notify(alerts[a][0], alerts[a][1]);
+  }
+  if(needExpand.length){
+    for(var n = 0; n < needExpand.length; n++){ var rr = byId(needExpand[n]); if(rr) rr.open = true; }
+    saveActive(true); render();
+    return;
+  }
+  if(booted && dueAll.length && (lastBeepAt === 0 || Date.now() - lastBeepAt > 60000)){
+    beep(); lastBeepAt = Date.now();
+  }
+  if(!subGuideEl.hidden) patchSubCards();
+  updateBanner(dueAll, winAll, loopAll);
+  flashTitle(dueAll.length > 0 || winAll.length > 0);
+  if(gap > 3000){ render(); }
+}
+
+function patchIsle(row, res, i, st, now, eff){
+  row.classList.toggle("idle", st === "idle");
+  row.classList.toggle("run", st === "run");
+  row.classList.toggle("win", st === "win");
+  row.classList.toggle("due", st === "due");
+  row.classList.toggle("has-rec", st !== "idle");
+
+  var phaseEl = row.querySelector(".isle-phase");
+  var clock = row.querySelector(".clock"), nextEl = row.querySelector(".next"), recAt = row.querySelector(".rec-at");
+  var winMark = row.querySelector(".win-mark");
+
+  if(st === "idle" || !eff){
+    row.classList.remove("t-yellow", "t-red");
+    phaseEl.textContent = "";
+    clock.textContent = "--:--";
+    nextEl.textContent = "";
+    recAt.textContent = "";
+    winMark.hidden = true;
+    return;
+  }
+
+  if(eff.hasWin && eff.earlyRatio > 0 && eff.earlyRatio < 1){
+    winMark.hidden = false;
+    winMark.style.left = (eff.earlyRatio * 100).toFixed(1) + "%";
+    winMark.title = "刷新窗口起点：" + fmtWhen(eff.winStart);
+  }else{
+    winMark.hidden = true;
+  }
+
+  var pct = (now - eff.start) / eff.durMs * 100;
+  row.querySelector(".bar i").style.width = Math.min(100, Math.max(0, pct)).toFixed(1) + "%";
+
+  if(st === "run"){
+    if(eff.hasWin){
+      var toWin = eff.winStart - now;
+      var tone = toneOf(toWin);
+      row.classList.toggle("t-yellow", tone === "yellow");
+      row.classList.toggle("t-red", tone === "red");
+      phaseEl.textContent = "距进窗";
+      clock.textContent = fmtRemain(toWin);
+      nextEl.textContent = fmtHM(eff.winStart) + "~" + fmtHM(eff.end) + " 刷";
+    }else{
+      var toEnd = eff.end - now;
+      var tone2 = toneOf(toEnd);
+      row.classList.toggle("t-yellow", tone2 === "yellow");
+      row.classList.toggle("t-red", tone2 === "red");
+      phaseEl.textContent = "计时";
+      clock.textContent = fmtRemain(toEnd);
+      nextEl.textContent = fmtWhen(eff.end);
+    }
+  }else if(st === "win"){
+    var remMax = eff.end - now;
+    row.classList.remove("t-yellow");
+    row.classList.toggle("t-red", remMax < 600000);
+    phaseEl.textContent = "刷新窗";
+    clock.textContent = fmtRemain(remMax);
+    nextEl.textContent = fmtHM(eff.winStart) + "~" + fmtHM(eff.end) + " 随时刷";
+  }else{
+    row.classList.remove("t-yellow", "t-red");
+    phaseEl.textContent = "到点";
+    clock.textContent = "已到点";
+    nextEl.textContent = "逾 " + fmtOver(now - eff.end);
+    row.querySelector(".bar i").style.width = "100%";
+  }
+
+  var looping = effLoop(res, i);
+  var tag = eff.edited ? "改" : (looping && eff.round > 0 ? "循" : "记");
+  recAt.textContent = fmtShortClock(eff.start) + tag;
+}
+
+function patchTrunk(trunk, res, dueIsles, winIsles, recorded, best){
+  var el = trunk.querySelector(".summary");
+  var text, cls = "";
+  if(dueIsles.length){
+    text = dueIsles.map(function(i){ return (i + 1) + "岛"; }).join(" ") + " 到点";
+    cls = "due";
+  }else if(winIsles.length){
+    text = winIsles.map(function(i){ return (i + 1) + "岛"; }).join(" ") + " 刷新窗 (" + fmtRemain(best.rem) + ")";
+    cls = "t-yellow";
+  }else if(best){
+    var prefix = best.mode === "toWin" ? "进窗 " : "";
+    text = (best.isle + 1) + "岛 " + prefix + fmtRemain(best.rem);
+    cls = "t-" + toneOf(best.rem);
+  }else{
+    text = "未记录";
+  }
+  el.textContent = text;
+  el.className = "summary" + (cls ? " " + cls : "");
+}
+
+function updateBanner(dueLabels, winLabels, loopLabels){
+  var parts = [];
+  if(dueLabels.length) parts.push("到点：<b>" + esc(dueLabels.join("、")) + "</b>");
+  if(winLabels && winLabels.length) parts.push("刷新窗：<b>" + esc(winLabels.join("、")) + "</b>");
+  var t = parts.join(" · ");
+  if(t === bannerText && bannerEl.hidden === !t) return;
+  bannerText = t;
+  if(!t){ bannerEl.hidden = true; return; }
+  bannerEl.hidden = false;
+  bannerEl.innerHTML = t;
+}
+
+function flashTitle(anyAlert){
+  if(!anyAlert){
+    if(titleTimer){ clearInterval(titleTimer); titleTimer = null; }
+    document.title = "刷新表";
+    return;
+  }
+  if(titleTimer) return;
+  titleTick = 0;
+  titleTimer = setInterval(function(){
+    titleTick++;
+    document.title = (titleTick % 2) ? "【该刷新了】" : "刷新表";
+  }, 1200);
+}
+
+var UNIT_MINS = {min: 1, hour: 60, day: 1440};
+function unitOf(name){
+  var el = sheetEl.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : "min";
+}
+function setUnit(name, val){
+  sheetEl.querySelectorAll('input[name="' + name + '"]').forEach(function(r){
+    r.checked = (r.value === val);
+  });
+}
+function syncForm(){
+  var isRange = sRange.checked;
+  singleRow.hidden = isRange;
+  rangeBox.hidden = !isRange;
+}
+sRange.addEventListener("change", syncForm);
+
+function openSheet(){
+  fillCatSelect();
+  resetForm();
+  sheetEl.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeSheet(){
+  sheetEl.hidden = true;
+  document.body.style.overflow = "";
+  addBtn.focus();
+}
+function resetForm(){
+  sName.value = "";
+  sRange.checked = true;
+  sEarly.value = 2; setUnit("eunit", "hour");
+  sLate.value = 6; setUnit("lunit", "hour");
+  sTime.value = 6; setUnit("unit", "hour");
+  var cats = currentCats();
+  if(activeTab !== "全部" && cats.indexOf(activeTab) >= 0){
+    sCat.value = activeTab;
+  }else if(cats.indexOf("宝箱") >= 0){
+    sCat.value = "宝箱";
+  }else{
+    sCat.value = "自定义";
+  }
+  sSubCatNew.value = "";
+  fillSubCatSelect();
+  sLoop.checked = false;
+  hideErr();
+  syncForm();
+}
+function showErr(msg){ addErr.textContent = msg; addErr.hidden = false; }
+function hideErr(){ addErr.hidden = true; }
+function readTime(valEl, unitName){
+  var v = parseFloat(valEl.value);
+  if(isNaN(v)) return 0;
+  return Math.round(v * UNIT_MINS[unitOf(unitName)]);
+}
+
+function add(){
+  var catVal = sCat.value;
+  var subVal = "";
+  if(catVal && catVal !== "自定义"){
+    if(sSubCatSel.value === "__NEW__"){
+      subVal = sSubCatNew.value.trim();
+      if(!subVal){ showErr("请先填写新建的小类（物品）名称"); sSubCatNew.focus(); return; }
+      var map = currentSubCatsMap();
+      if(!Array.isArray(map[catVal])) map[catVal] = [];
+      if(map[catVal].indexOf(subVal) < 0) map[catVal].push(subVal);
+    }else{
+      subVal = sSubCatSel.value || "";
+    }
+  }
+
+  var name = sName.value.trim() || subVal;
+  if(!name){
+    showErr("请选择二级小类，或填写物质名称");
+    sName.focus();
+    return;
+  }
+
+  var res;
+  if(sRange.checked){
+    var early = readTime(sEarly, "eunit");
+    var late  = readTime(sLate, "lunit");
+    if(early <= 0){ showErr("最早刷出时间要大于 0"); sEarly.focus(); return; }
+    if(late < early){ showErr("最晚必刷时间不能比最早时间短"); sLate.focus(); return; }
+    res = {kind: "range", base: late, early: early, late: late};
+  }else{
+    var base = readTime(sTime, "unit");
+    if(base <= 0){ showErr("刷新时间要大于 0"); sTime.focus(); return; }
+    res = {kind: "range", base: base, early: base, late: base};
+  }
+  hideErr();
+  res.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  res.name = name;
+  res.cat = catVal;
+  res.subcat = subVal;
+  res.open = true;
+  res.loop = sLoop.checked;
+  res.loops = new Array(ISLES).fill(null);
+  res.starts = new Array(ISLES).fill(null);
+  res.customEnd = new Array(ISLES).fill(null);
+
+  currentResources().unshift(res);
+  if(catVal && catVal !== "自定义" && subVal){
+    activeTab = catVal;
+    activeSubTab = subVal;
+  }
+  saveActive();
+  renderTabs();
+  render();
+  closeSheet();
+  unlockAudio();
+}
+
+addBtn.addEventListener("click", openSheet);
+$("#saveBtn").addEventListener("click", add);
+$("#cancelBtn").addEventListener("click", closeSheet);
+sheetEl.addEventListener("keydown", function(e){
+  var t = e.target;
+  if(e.key === "Enter" && t.tagName === "INPUT" && (t.type === "number" || t.type === "text")){
+    e.preventDefault(); add();
+  }
+  if(e.key === "Escape") closeSheet();
+});
+
+/* 模式切换与团队云同步逻辑 */
+var teamCard = $("#teamCard");
+var tabModeLocal = $("#tabModeLocal");
+var tabModeTeam = $("#tabModeTeam");
+var modeBadge = $("#modeBadge");
+
+function applyModeUI(){
+  if(currentMode === "team"){
+    tabModeLocal.className = "mode-tab";
+    tabModeTeam.className = "mode-tab on";
+    modeBadge.className = "badge-mode team";
+    modeBadge.textContent = "小队";
+    teamCard.hidden = false;
+  }else{
+    tabModeLocal.className = "mode-tab on";
+    tabModeTeam.className = "mode-tab";
+    modeBadge.className = "badge-mode";
+    modeBadge.textContent = "本地";
+    teamCard.hidden = true;
+  }
+  activeTab = currentMode === "team" ? teamData.tab : localData.tab;
+  activeSubTab = currentMode === "team" ? teamData.subTab : localData.subTab;
+  renderTabs();
+  render();
+}
+
+tabModeLocal.addEventListener("click", function(){
+  if(currentMode === "local") return;
+  currentMode = "local";
+  saveActive(true);
+  applyModeUI();
+  showToast("已切换到个人本地模式");
+});
+
+tabModeTeam.addEventListener("click", function(){
+  if(currentMode === "team") return;
+  currentMode = "team";
+  saveActive(true);
+  applyModeUI();
+  showToast("已切换到小队联机模式");
+  if(activeSquad) pullLatestFromRoom(true);
+});
+
+function packStatePayload(includeRoom, store, withImgs){
+  store = store || teamData;
+  var payload = {
+    v: 3,
+    t: store.updatedAt || Date.now(),
+    s: clientId,
+    rm: includeRoom ? (store.roomCode || "") : undefined,
+    c: store.allCats,
+    sc: store.subCatsMap,
+    si: withImgs ? (store.subImgs || {}) : undefined,
+    r: store.resources.map(function(x){
+      return {
+        id: x.id, name: x.name, cat: x.cat, subcat: x.subcat || "", kind: x.kind,
+        base: x.base, early: x.early, late: x.late,
+        loop: x.loop, loops: x.loops, open: x.open,
+        starts: x.starts, customEnd: x.customEnd
+      };
+    })
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+
+function decodeToken(rawInput){
+  try{
+    var clean = rawInput.trim();
+    var tokenMatch = clean.match(/CZMF-([A-Za-z0-9+/=]+)/);
+    if(tokenMatch){
+      clean = tokenMatch[1];
+    }else if(clean.indexOf("CZMF-") === 0){
+      clean = clean.slice(5);
+    }
+    var obj = JSON.parse(decodeURIComponent(escape(atob(clean))));
+    if(!obj) return null;
+    if(!Array.isArray(obj.r) && !(obj.img && typeof obj.img.k === "string")) return null;
+    return obj;
+  }catch(e){ return null; }
+}
+
+function applyObjToStore(obj, store){
+  if(Array.isArray(obj.c)){
+    store.allCats = obj.c.filter(function(c){ return typeof c === "string" && c.trim() && c !== "全部"; });
+  }
+  if(obj.sc && typeof obj.sc === "object") store.subCatsMap = obj.sc;
+  store.resources = normalizeResources(obj.r);
+  if(obj.si && typeof obj.si === "object") store.subImgs = cleanImgs(obj.si);
+  if(!store.subImgs) store.subImgs = {};
+  ensureSubCatsRegistered(store);
+  store.updatedAt = obj.t || Date.now();
+  loopCache = {};
+}
+
+/* 小队实时同步：把消息应用到指定小队的数据里 */
+function unpackAndApplyState(rawInput, isLiveRoom, target, code){
+  try{
+    target = target || teamData;
+    var obj = decodeToken(rawInput);
+    if(!obj) return false;
+    if(isLiveRoom && obj.s === clientId) return false;
+
+    var isActive = (target === teamData);
+    if(obj.img){
+      if(!target.subImgs) target.subImgs = {};
+      var dImg = obj.img.d;
+      if(typeof dImg === "string" && dImg.indexOf("data:image/") === 0 && dImg.length < 40000) target.subImgs[obj.img.k] = dImg;
+      else delete target.subImgs[obj.img.k];
+      if(isActive && currentMode === "team"){
+        saveActive(true);
+        if(!subGuideEl.hidden) renderSubGuide();
+      }else{
+        saveSquads();
+      }
+      return true;
+    }
+
+    applyObjToStore(obj, target);
+
+    if(isActive && currentMode === "team"){
+      saveActive(true);
+      renderTabs();
+      render();
+    }else{
+      saveSquads();
+    }
+    if(isActive){
+      var nowStr = p2(new Date().getHours()) + ":" + p2(new Date().getMinutes()) + ":" + p2(new Date().getSeconds());
+      $("#lastSyncInfo").textContent = "已同步小队最新时间 (" + nowStr + ")";
+    }
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function topicForRoom(code){
+  var h1 = 0x811c9dc5, h2 = 0x1b873593;
+  var str = "czmf_private_room_2026_" + code.trim();
+  for(var i = 0; i < str.length; i++){
+    var c = str.charCodeAt(i);
+    h1 ^= c; h1 = Math.imul(h1, 0x01000193);
+    h2 ^= c; h2 = Math.imul(h2, 0x85ebca6b);
+  }
+  return "czmf_team_" + (h1 >>> 0).toString(36) + "_" + (h2 >>> 0).toString(36);
+}
+
+function renderSquadList(){
+  var box = $("#squadList");
+  if(!box) return;
+  box.innerHTML = "";
+  squads.forEach(function(q){
+    var chip = document.createElement("span");
+    chip.className = "squad-chip" + (q.code === activeSquad ? " on" : "");
+    chip.appendChild(document.createTextNode(q.code));
+    var x = document.createElement("button");
+    x.type = "button"; x.className = "sq-x"; x.textContent = "×"; x.title = "断开这个小队";
+    x.addEventListener("click", function(ev){ ev.stopPropagation(); disconnectRoom(false, q.code); });
+    chip.appendChild(x);
+    chip.addEventListener("click", function(){ switchSquad(q.code); });
+    box.appendChild(chip);
+  });
+}
+
+function updateRoomUI(){
+  var dot = $("#syncDot"), stText = $("#syncStatusText"),
+      pullBtn = $("#pullNowBtn"), pushBtn = $("#pushNowBtn"), leaveBtn = $("#leaveRoomBtn");
+  renderSquadList();
+  if(!activeSquad){
+    dot.className = "dot";
+    stText.textContent = "未连接小队";
+    pullBtn.hidden = true;
+    pushBtn.hidden = true;
+    leaveBtn.hidden = true;
+    return;
+  }
+  pullBtn.hidden = false;
+  pushBtn.hidden = false;
+  leaveBtn.hidden = false;
+  var c = conns[activeSquad];
+  var suffix = "（" + squads.length + "/" + MAX_SQUADS + "）";
+  if(c && c.status === "live"){
+    dot.className = "dot live";
+    stText.textContent = (c.msg || ("已连：" + activeSquad)) + suffix;
+  }else{
+    dot.className = "dot wait";
+    stText.textContent = ((c && c.msg) || ("连接中：" + activeSquad)) + suffix;
+  }
+}
+
+function pullLatestFromRoom(silent, code){
+  code = code || activeSquad;
+  var sq = squadByCode(code);
+  if(!sq) return;
+  var topic = topicForRoom(code);
+  fetch("https://ntfy.sh/" + topic + "/json?poll=1&since=12h")
+    .then(function(res){ return res.text(); })
+    .then(function(txt){
+      var lines = txt.trim().split("\n");
+      var stateDone = false, seenImg = {};
+      for(var i = lines.length - 1; i >= 0; i--){
+        if(!lines[i]) continue;
+        try{
+          var item = JSON.parse(lines[i]);
+          if(item && item.event === "message" && item.message){
+            var po = decodeToken(item.message);
+            if(!po) continue;
+            if(po.img){
+              if(seenImg[po.img.k]) continue;
+              seenImg[po.img.k] = 1;
+              unpackAndApplyState(item.message, false, sq.data, code);
+            }else if(!stateDone){
+              stateDone = true;
+              if(unpackAndApplyState(item.message, false, sq.data, code)){
+                if(!silent) showToast("已拉取小队最新刷新表");
+              }
+            }
+          }
+        }catch(e){}
+      }
+    }).catch(function(){});
+}
+
+function closeConn(code){
+  var c = conns[code];
+  if(!c) return;
+  if(c.es){ try{ c.es.close(); }catch(e){} }
+  if(c.bc){ try{ c.bc.close(); }catch(e){} }
+  delete conns[code];
+}
+
+function openConn(code){
+  closeConn(code);
+  var sq = squadByCode(code);
+  if(!sq) return;
+  var c = conns[code] = {es: null, bc: null, status: "wait", msg: ""};
+  var topic = topicForRoom(code);
+  try{
+    if("BroadcastChannel" in window){
+      c.bc = new BroadcastChannel(topic);
+      c.bc.onmessage = function(ev){
+        if(ev.data && unpackAndApplyState(ev.data, true, sq.data, code)){
+          if(currentMode === "team" && code === activeSquad) showToast("队友更新了刷新时间");
+        }
+      };
+    }
+  }catch(e){}
+
+  try{
+    c.es = new EventSource("https://ntfy.sh/" + topic + "/sse");
+    c.es.onopen = function(){
+      c.status = "live"; c.msg = "";
+      updateRoomUI();
+      if(code === activeSquad) $("#lastSyncInfo").textContent = "小队频道在线";
+    };
+    c.es.onmessage = function(ev){
+      try{
+        var data = JSON.parse(ev.data);
+        if(data && data.event === "message" && data.message){
+          if(unpackAndApplyState(data.message, true, sq.data, code)){
+            if(currentMode === "team" && code === activeSquad) showToast("已同步队友的操作");
+          }
+        }
+      }catch(err){}
+    };
+    c.es.onerror = function(){
+      c.status = "wait"; c.msg = "重连中...";
+      updateRoomUI();
+    };
+  }catch(e){
+    c.status = "wait"; c.msg = "请用口令码同步";
+  }
+}
+
+function switchSquad(code){
+  var sq = squadByCode(code);
+  if(!sq) return;
+  if(currentMode === "team" && activeSquad){
+    teamData.tab = activeTab;
+    teamData.subTab = activeSubTab;
+  }
+  activeSquad = code;
+  teamData = sq.data;
+  teamData.roomCode = code;
+  $("#roomCodeInp").value = code;
+  saveSquads();
+  if(currentMode === "team"){
+    activeTab = teamData.tab;
+    activeSubTab = teamData.subTab;
+    if(tabsList().indexOf(activeTab) < 0){ activeTab = "全部"; activeSubTab = ""; }
+    renderTabs();
+    render();
+  }
+  updateRoomUI();
+}
+
+function connectRoom(code, skipInitialPull){
+  code = (code || "").trim();
+  if(!code){ showToast("请先输入小队暗号"); return; }
+  var exist = squadByCode(code);
+  if(exist){
+    if(!conns[code]) openConn(code);
+    switchSquad(code);
+    if(!skipInitialPull) pullLatestFromRoom(true, code);
+    showToast("已切换到小队：" + code);
+    return;
+  }
+  if(squads.length >= MAX_SQUADS){
+    showToast("最多同时加入" + MAX_SQUADS + "个小队，请先断开一个");
+    return;
+  }
+  var data;
+  if(squads.length === 0){
+    data = teamData; // 第一个小队沿用当前小队页里已有的内容
+  }else{
+    data = normalizeStore({});
+  }
+  data.roomCode = code;
+  squads.push({code: code, data: data});
+  switchSquad(code);
+  openConn(code);
+  if(!skipInitialPull) pullLatestFromRoom(true, code);
+}
+
+function disconnectRoom(silent, code){
+  code = code || activeSquad;
+  var sq = squadByCode(code);
+  if(!sq) return;
+  closeConn(code);
+  squads = squads.filter(function(q){ return q.code !== code; });
+  if(code === activeSquad){
+    if(squads.length){
+      activeSquad = "";
+      switchSquad(squads[0].code);
+    }else{
+      activeSquad = "";
+      teamData = sq.data;
+      teamData.roomCode = "";
+      saveSquads();
+      try{ localStorage.setItem(KEY_TEAM, JSON.stringify(teamData)); }catch(e){}
+      if(currentMode === "team"){ renderTabs(); render(); }
+    }
+  }else{
+    saveSquads();
+  }
+  updateRoomUI();
+  $("#lastSyncInfo").textContent = squads.length ? "输入相同暗号即可同屏（最多同时加入5个小队）" : "未连接小队频道";
+  if(!silent) showToast("已断开小队：" + code);
+}
+
+function broadcastChange(){
+  if(currentMode !== "team" || !activeSquad) return;
+  var code = activeSquad, store = teamData;
+  clearTimeout(syncDebounce);
+  syncDebounce = setTimeout(function(){
+    var packed = packStatePayload(true, store);
+    var c = conns[code];
+    if(c && c.bc){ try{ c.bc.postMessage(packed); }catch(e){} }
+    var topic = topicForRoom(code);
+    fetch("https://ntfy.sh/" + topic, { method: "POST", body: packed }).catch(function(){});
+  }, 200);
+}
+
+$("#joinRoomBtn").addEventListener("click", function(){
+  connectRoom($("#roomCodeInp").value, false);
+});
+$("#genRoomBtn").addEventListener("click", function(){
+  if(squads.length >= MAX_SQUADS){ showToast("最多同时加入" + MAX_SQUADS + "个小队，请先断开一个"); return; }
+  var rand = "cm" + Math.random().toString(36).slice(2, 7);
+  $("#roomCodeInp").value = rand;
+  connectRoom(rand, true);
+  broadcastChange();
+  pushAllImages();
+  showToast("已创建并连接暗号：" + rand);
+});
+$("#leaveRoomBtn").addEventListener("click", function(){ disconnectRoom(false); });
+$("#pullNowBtn").addEventListener("click", function(){ pullLatestFromRoom(false); });
+$("#pushNowBtn").addEventListener("click", function(){
+  broadcastChange();
+  pushAllImages();
+  showToast("已推送给队友！");
+});
+
+function copyText(str, okMsg){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(str).then(function(){ showToast(okMsg); }).catch(function(){ fallbackCopy(str, okMsg); });
+  }else{
+    fallbackCopy(str, okMsg);
+  }
+}
+function fallbackCopy(str, okMsg){
+  var ta = document.createElement("textarea");
+  ta.value = str;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); showToast(okMsg); }catch(e){ showToast("复制失败"); }
+  document.body.removeChild(ta);
+}
+
+$("#exportCodeBtn").addEventListener("click", function(){
+  var token = "【创魔刷新表口令】复制整条消息到App导入即可同步我的本地计时器：CZMF-" + packStatePayload(false, localData, true);
+  copyText(token, "已复制本地计时器口令码！发给别人粘贴即可");
+});
+
+$("#importCodeBtn").addEventListener("click", function(){
+  var val = $("#importCodeInp").value.trim();
+  if(!val){ showToast("请先粘贴口令码"); return; }
+  var obj = decodeToken(val);
+  if(!obj || !Array.isArray(obj.r)){ showToast("口令码格式不正确"); return; }
+  applyObjToStore(obj, localData);
+  try{ localStorage.setItem(KEY_LOCAL, JSON.stringify(localData)); }catch(e){}
+  $("#importCodeInp").value = "";
+  if(currentMode === "local"){
+    if(tabsList().indexOf(activeTab) < 0){ activeTab = "全部"; activeSubTab = ""; }
+    renderTabs();
+    render();
+    saveActive(true);
+    showToast("导入成功！已导入到本地计时器");
+  }else{
+    showToast("导入成功！已导入到本地计时器（切到“本地”查看）");
+  }
+});
+
+document.addEventListener("pointerdown", function(){ unlockAudio(); }, {once: true});
+
+/* ---------- 悬浮快记球与直接输入栏小窗（含上下自适应防越界定位） ---------- */
+var fabBall = $("#fabBall");
+var quickFloat = $("#quickFloat");
+var qfModeTag = $("#qfModeTag");
+var qfSmartInp = $("#qfSmartInp"), qfSmartSubmit = $("#qfSmartSubmit");
+
+function syncQuickFloat(){
+  if(!quickFloat) return;
+  qfModeTag.textContent = currentMode === "team" ? "小队" : "本地";
+  var list = currentResources();
+  if(list.length > 0 && !byId(qfSelectedResId)){
+    qfSelectedResId = list[0].id;
+  }
+}
+
+$("#qfSmartEx").querySelectorAll(".chip").forEach(function(chip){
+  chip.addEventListener("click", function(){
+    qfSmartInp.value = (qfSmartInp.value + (chip.dataset.fill || "")).trimStart();
+    qfSmartInp.focus();
+  });
+});
+
+qfSmartSubmit.addEventListener("click", function(){
+  triggerSmartInput(qfSmartInp);
+});
+qfSmartInp.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    e.preventDefault();
+    triggerSmartInput(qfSmartInp);
+  }
+});
+
+function positionQuickFloat(){
+  if(!quickFloat || quickFloat.hidden) return;
+  var ballRect = fabBall.getBoundingClientRect();
+  var qfW = quickFloat.offsetWidth || 300;
+  var qfH = quickFloat.offsetHeight || 168;
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var pad = 12;
+
+  // 水平方向：靠近悬浮球所在侧，并严格限制在屏幕内
+  var left;
+  if(ballRect.left + ballRect.width / 2 < vw / 2){
+    left = Math.max(pad, ballRect.left);
+  }else{
+    left = Math.min(vw - qfW - pad, ballRect.right - qfW);
+  }
+  left = Math.max(pad, Math.min(vw - qfW - pad, left));
+
+  // 垂直方向：若悬浮球偏屏幕上半部分，弹窗向下展开；偏下半部分则向上展开，绝不遮挡顶部关闭按钮
+  var top;
+  if(ballRect.top < qfH + 24){
+    top = ballRect.bottom + 10;
+  }else{
+    top = ballRect.top - qfH - 10;
+  }
+  top = Math.max(pad, Math.min(vh - qfH - pad, top));
+
+  quickFloat.style.right = "auto";
+  quickFloat.style.bottom = "auto";
+  quickFloat.style.left = Math.round(left) + "px";
+  quickFloat.style.top = Math.round(top) + "px";
+}
+
+function toggleQuickFloat(forceOpen){
+  var willOpen = (typeof forceOpen === "boolean") ? forceOpen : quickFloat.hidden;
+  quickFloat.hidden = !willOpen;
+  fabBall.classList.toggle("open", willOpen);
+  if(willOpen){
+    syncQuickFloat();
+    positionQuickFloat();
+    setTimeout(function(){
+      positionQuickFloat();
+      qfSmartInp.focus();
+    }, 20);
+  }
+}
+
+$("#qfCloseBtn").addEventListener("click", function(){ toggleQuickFloat(false); });
+window.addEventListener("resize", positionQuickFloat);
+
+/* 悬浮球拖拽与点击判别（支持触摸与鼠标） */
+(function initFabDrag(){
+  var dragging = false, moved = false, startX = 0, startY = 0, origRight = 14, origBottom = 76;
+  fabBall.addEventListener("pointerdown", function(e){
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    var rect = fabBall.getBoundingClientRect();
+    origRight = window.innerWidth - rect.right;
+    origBottom = window.innerHeight - rect.bottom;
+    fabBall.setPointerCapture(e.pointerId);
+  });
+  fabBall.addEventListener("pointermove", function(e){
+    if(!dragging) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    if(Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+    if(!moved) return;
+    var newRight = Math.min(window.innerWidth - 62, Math.max(10, origRight - dx));
+    var newBottom = Math.min(window.innerHeight - 62, Math.max(12, origBottom - dy));
+    fabBall.style.right = newRight + "px";
+    fabBall.style.bottom = newBottom + "px";
+    if(!quickFloat.hidden) positionQuickFloat();
+  });
+  fabBall.addEventListener("pointerup", function(e){
+    if(!dragging) return;
+    dragging = false;
+    try{ fabBall.releasePointerCapture(e.pointerId); }catch(err){}
+    if(!moved){
+      toggleQuickFloat();
+    }else{
+      var rect = fabBall.getBoundingClientRect();
+      var snapRight = (rect.left + rect.width / 2 < window.innerWidth / 2) ? (window.innerWidth - 62) : 14;
+      fabBall.style.right = snapRight + "px";
+      if(!quickFloat.hidden) positionQuickFloat();
+    }
+  });
+})();
+
+function resumeSync(){
+  tick();
+  squads.forEach(function(q){
+    pullLatestFromRoom(true, q.code);
+    var c = conns[q.code];
+    if(!c || !c.es || c.es.readyState === 2) openConn(q.code);
+  });
+}
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) resumeSync(); });
+window.addEventListener("focus", resumeSync);
+window.addEventListener("pageshow", resumeSync);
+window.addEventListener("online", resumeSync);
+document.addEventListener("resume", resumeSync);
+
+loadAll();
+updateSoundBtn();
+updateNotifyBtn();
+applyModeUI();
+
+squads.forEach(function(q){
+  openConn(q.code);
+  pullLatestFromRoom(true, q.code);
+});
+if(activeSquad) $("#roomCodeInp").value = activeSquad;
+updateRoomUI();
+
+var now0 = Date.now();
+var alertOnLoad = false;
+var initResList = currentResources();
+for(var r = 0; r < initResList.length; r++){
+  var any = false;
+  for(var i = 0; i < ISLES; i++){
+    var key0 = initResList[r].id + ":" + i;
+    var eff0 = effectiveStart(initResList[r], i, now0);
+    var st0 = eff0 ? isleStateAt(eff0, now0) : "idle";
+    rowState[key0] = st0;
+    if(eff0){
+      var wb0 = key0 + ":" + eff0.start;
+      if(st0 === "run" && (eff0.hasWin ? eff0.winStart : eff0.end) - now0 <= 300000) warned[wb0 + ":a"] = 1;
+      if(st0 === "win" && eff0.end - now0 <= 300000) warned[wb0 + ":b"] = 1;
+    }
+    if(eff0) lastRound[key0] = eff0.round; else delete lastRound[key0];
+    if(st0 === "due"){ any = true; alertOnLoad = true; }
+  }
+  if(any) initResList[r].open = true;
+}
+render();
+booted = true;
+tick();
+if(alertOnLoad){
+  setTimeout(function(){ beep(); lastBeepAt = Date.now(); }, 700);
+}
+setInterval(tick, 500);
+})();
+</script>
+</body>
+</html>
